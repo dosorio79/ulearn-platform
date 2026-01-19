@@ -2,19 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## Repository history note
+
+This repository was extracted from a larger monorepo during the AI Dev Tools Zoomcamp course. Earlier course exercises and unrelated modules were intentionally excluded. See `README.md` for the full migration context and rationale.
+
+## [0.3.0] - 2026-01-19
 
 ### Added
 - Failure telemetry stored in Mongo for schema validation errors and unexpected exceptions.
-
-### Changed
-- Refined frontend typography hierarchy for clearer primary/secondary/tertiary text contrast.
-- Tweaked header/logo styling and in-card spacing for a tighter, calmer layout.
-- Polished lesson section styling (section borders, larger chips, icon-only copy control).
-
-## [0.3.0] - 2026-01-17
-
-### Added
 - Markdown export controls (copy/download full lesson, copy per section).
 - Frontend UX refinements (loading phases/progress, “Why it works”, feedback buttons, header logo).
 - Loading error toast, elapsed seconds, and section chip actions.
@@ -22,6 +17,9 @@ All notable changes to this project will be documented in this file.
 - Nginx reverse proxy for `/lesson` and `/health` in the frontend container.
 
 ### Changed
+- Refined frontend typography hierarchy for clearer primary/secondary/tertiary text contrast.
+- Tweaked header/logo styling and in-card spacing for a tighter, calmer layout.
+- Polished lesson section styling (section borders, larger chips, icon-only copy control).
 - Enforced structured text formatting in validator and prompts.
 - Updated exercise markdown fence format for frontend rendering.
 - Removed legacy lovable tagger and updated meta images.
