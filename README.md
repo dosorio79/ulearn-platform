@@ -286,3 +286,18 @@ These are natural extensions but outside the scope of this project.
 ## Changelog
 
 See `CHANGELOG.md` for release notes.
+
+---
+
+## Repository history note
+
+This repository was extracted from a larger monorepo used during the AI Dev Tools Zoomcamp course. Only the files related to the Agentic Micro-Learning Platform capstone project were preserved during the migration. Earlier course exercises, experiments, and unrelated modules were intentionally excluded to keep this repository focused and maintainable.
+
+As a result:
+* Git history prior to the migration does not reflect the full course repository
+* Commits from version v0.3.0 onward represent the standalone evolution of this project
+
+This restructuring was done to enable:
+* Clear ownership and scope
+* Independent versioning and releases
+* CI/CD and deployment workflows specific to this project
