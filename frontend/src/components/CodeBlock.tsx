@@ -247,7 +247,10 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
                 {result.error}
               </pre>
               {errorHint && (
-                <div className="mt-2 text-xs text-muted-foreground">
+                <div
+                  className="mt-2 text-xs text-muted-foreground"
+                  data-testid={result.error?.includes('Execution timed out') ? 'execution-timeout-hint' : undefined}
+                >
                   {errorHint}
                 </div>
               )}

@@ -14,6 +14,7 @@ export function ExerciseBlock({ content }: ExerciseBlockProps) {
     <div className="my-6 rounded-lg border-2 border-primary/30 bg-accent/50 overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 bg-primary/10 border-b border-primary/20">
         <span className="text-lg">✍️</span>
+        <span className="text-sm uppercase tracking-wide text-muted-foreground">Exercise</span>
         <span className="font-semibold text-foreground">Your turn!</span>
         <button
           type="button"
