@@ -16,6 +16,7 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 - Frontend CI now includes a production build step.
 - Resolved frontend lint errors in CodeBlock, Tailwind config, and UI component types.
 - Added missing frontend `cn` utility to fix module resolution in tests.
+- Added timeout hint test id and exercise label to align UI with frontend tests.
 
 ### Docs
 - Documented CI behavior in the README and testing docs.
