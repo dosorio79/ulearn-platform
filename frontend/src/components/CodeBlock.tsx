@@ -75,10 +75,11 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
           timestamp: new Date().toISOString(),
         });
       } finally {
-        if (runIdRef.current !== runId) return;
-        clearTimeout(timeoutId);
-        setIsRunning(false);
-        setRunPhase('idle');
+        if (runIdRef.current === runId) {
+          clearTimeout(timeoutId);
+          setIsRunning(false);
+          setRunPhase('idle');
+        }
       }
     };
 
@@ -246,7 +247,10 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
                 {result.error}
               </pre>
               {errorHint && (
-                <div className="mt-2 text-xs text-muted-foreground">
+                <div
+                  className="mt-2 text-xs text-muted-foreground"
+                  data-testid={result.error?.includes('Execution timed out') ? 'execution-timeout-hint' : undefined}
+                >
                   {errorHint}
                 </div>
               )}

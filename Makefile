@@ -1,4 +1,4 @@
-.PHONY: help build start stop remove logs test test-unit test-api test-llm test-integration frontend-build
+.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration frontend-build
 
 help:
 	@echo "Targets:"
@@ -10,7 +10,7 @@ help:
 	@echo "  test            Run backend tests (uv)"
 	@echo "  test-unit       Run unit tests"
 	@echo "  test-api        Run API tests"
-	@echo "  test-llm        Run LLM parsing tests"
+	@echo "  test-content-parse Run content parsing tests"
 	@echo "  test-integration Run integration tests"
 
 frontend-build:
@@ -43,8 +43,8 @@ test-unit:
 test-api:
 	@uv run pytest -m api
 
-test-llm:
-	@uv run pytest -m llm
+test-content-parse:
+	@uv run pytest -m content_parse
 
 test-integration:
 	@uv run pytest -m integration
