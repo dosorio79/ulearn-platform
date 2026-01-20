@@ -14,6 +14,7 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ### Changed
 - Frontend CI now includes a production build step.
+- Resolved frontend lint errors in CodeBlock, Tailwind config, and UI component types.
 
 ### Docs
 - Documented CI behavior in the README and testing docs.
