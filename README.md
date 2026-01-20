@@ -1,6 +1,6 @@
 # uLearn — Agentic Micro-Learning Platform
 
-[![CI](https://img.shields.io/badge/CI-pending-lightgrey)](#)
+[![CI](https://github.com/dosorio79/ulearn-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/dosorio79/ulearn-platform/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-green)](#)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](#)
 
