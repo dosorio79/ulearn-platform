@@ -75,10 +75,11 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
           timestamp: new Date().toISOString(),
         });
       } finally {
-        if (runIdRef.current !== runId) return;
-        clearTimeout(timeoutId);
-        setIsRunning(false);
-        setRunPhase('idle');
+        if (runIdRef.current === runId) {
+          clearTimeout(timeoutId);
+          setIsRunning(false);
+          setRunPhase('idle');
+        }
       }
     };
 
