@@ -46,7 +46,7 @@ What is covered:
 Markers are available to focus on subsets:
 
 - `unit`: unit tests
-- `llm`: LLM content agent parsing tests
+- `content_parse`: Content agent parsing tests (no LLM calls)
 - `api`: API contract tests
 - `integration`: integration tests
 
@@ -61,6 +61,10 @@ If you prefer using the system interpreter instead of `uv`, ensure `pytest` is i
 ```bash
 python -m pytest
 ```
+
+## CI
+
+GitHub Actions runs backend tests (with a MongoDB service) and frontend lint/test/build on every push and pull request. See `.github/workflows/ci.yml` for the exact steps.
 
 ## Notes
 

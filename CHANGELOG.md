@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file.
 
 This repository was extracted from a larger monorepo during the AI Dev Tools Zoomcamp course. Earlier course exercises and unrelated modules were intentionally excluded. See `README.md` for the full migration context and rationale.
 
+## [Unreleased]
+
+### Added
+- GitHub Actions CI workflow covering backend tests with MongoDB and frontend lint/test/build.
+- Content parsing test marker (`content_parse`) for clarity.
+
+### Changed
+- Frontend CI now includes a production build step.
+
+### Docs
+- Documented CI behavior in the README and testing docs.
+- Updated testing commands to use the `content_parse` marker.
+
 ## [0.3.0] - 2026-01-19
 
 ### Added

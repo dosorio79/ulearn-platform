@@ -29,5 +29,5 @@ markers = [
   "unit: unit tests",
   "api: API contract tests",
   "integration: integration tests",
-  "llm: LLM content agent parsing tests",
+  "content_parse: Content agent parsing tests (no LLM calls)",
 ]

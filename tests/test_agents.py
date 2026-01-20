@@ -409,7 +409,7 @@ def test_validator_json_only_response_requires_sections():
 
 
 # ContentAgentLLM parsing tests
-@pytest.mark.llm
+@pytest.mark.content_parse
 def test_content_llm_parse_result_accepts_dict():
     content_llm = _load_content_llm()
     agent = content_llm.ContentAgentLLM.__new__(content_llm.ContentAgentLLM)
@@ -435,7 +435,7 @@ def test_content_llm_parse_result_accepts_dict():
     assert sections[0].blocks[1].type == "python"
 
 
-@pytest.mark.llm
+@pytest.mark.content_parse
 def test_content_llm_parse_result_accepts_model():
     content_llm = _load_content_llm()
     agent = content_llm.ContentAgentLLM.__new__(content_llm.ContentAgentLLM)
@@ -461,7 +461,7 @@ def test_content_llm_parse_result_accepts_model():
     assert sections[0].blocks[0].content == "Example content."
 
 
-@pytest.mark.llm
+@pytest.mark.content_parse
 def test_content_llm_coerce_result_strips_code_fences_from_output():
     content_llm = _load_content_llm()
     agent = content_llm.ContentAgentLLM.__new__(content_llm.ContentAgentLLM)

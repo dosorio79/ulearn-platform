@@ -236,7 +236,7 @@ Run specific categories with markers:
 
 ```bash
 pytest -m unit
-pytest -m llm
+pytest -m content_parse
 pytest -m api
 pytest -m integration
 ```
@@ -254,9 +254,15 @@ Makefile shortcuts:
 make test
 make test-unit
 make test-api
-make test-llm
+make test-content-parse
 make test-integration
 ```
+
+---
+
+## CI
+
+GitHub Actions runs backend tests (with a MongoDB service) and frontend lint/test/build on every push and pull request. The workflow lives at `.github/workflows/ci.yml`.
 
 ---
 
