@@ -317,7 +317,7 @@ This repository was extracted from a larger monorepo used during the AI Dev Tool
 
 As a result:
 * Git history prior to the migration does not reflect the full course repository
-* Commits from version v0.3.0 onward represent the standalone evolution of this project
+* Commits from version v0.4.0 onward represent the standalone evolution of this project
 
 This restructuring was done to enable:
 * Clear ownership and scope

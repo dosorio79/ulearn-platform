@@ -9,6 +9,17 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 ## [Unreleased]
 
 ### Added
+- _None._
+
+### Changed
+- _None._
+
+### Docs
+- _None._
+
+## [0.4.0] - 2026-01-21
+
+### Added
 - GitHub Actions CI workflow covering backend tests with MongoDB and frontend lint/test/build.
 - Content parsing test marker (`content_parse`) for clarity.
 - Static lesson mode and in-memory telemetry for Render demo deployments.
