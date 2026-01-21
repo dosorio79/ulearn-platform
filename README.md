@@ -215,8 +215,24 @@ Create your environment file from `.env-example` and update values as needed:
 * `USE_LLM_CONTENT`: toggle LLM-backed content generation (`true` / `false`)
 * `CORS_ORIGINS`: allowed origins (default: `http://localhost:8080`)
 * `MONGO_FAILURE_COLLECTION`: MongoDB collection for failure telemetry (default: `lesson_failures`)
+* `STATIC_LESSON_MODE`: serve static lesson templates instead of agent-generated content (`true` / `false`)
+* `TELEMETRY_BACKEND`: telemetry destination (`mongo` or `memory`)
+* `DEMO_MODE`: shorthand to enable demo defaults (static lessons + memory telemetry)
+* `TELEMETRY_MEMORY_CAP`: max in-memory telemetry entries when using `memory` (default: `1000`)
 
 ---
+
+## Render demo deployment
+
+This repo includes a Render blueprint (`render.yaml`) for a static demo with in-memory telemetry.
+
+Use it when you want continuous deployment without LLM or Mongo dependencies:
+
+1) Deploy the backend service first and note its URL.
+2) Set `API_BASE` in `render.yaml` to that backend URL.
+3) Create the Render Blueprint from `render.yaml`.
+
+For local testing, you can also export demo defaults from `.env.render`.
 
 ## Testing
 

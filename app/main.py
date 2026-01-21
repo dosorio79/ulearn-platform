@@ -6,8 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import lesson
+from app.core import config
 from app.core.logging import setup_logging
 
+# Initialize logging as early as possible
 setup_logging()
 
 app = FastAPI(
@@ -16,17 +18,39 @@ app = FastAPI(
     description="Backend API for the uLearn micro-learning platform",
 )
 
+# ---------------------------
+# CORS configuration
+# ---------------------------
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:8080")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in cors_origins.split(",") if origin.strip()],
+    allow_origins=[
+        origin.strip()
+        for origin in cors_origins.split(",")
+        if origin.strip()
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/health", tags=["Health"])
+# ---------------------------
+# Health check
+# ---------------------------
+@app.get("/health", tags=["health"])
 async def health_check():
-    """Return a simple health indicator."""
-    return {"status": "healthy"}
+    """
+    Lightweight health endpoint.
 
+    - No external dependencies
+    - Safe for Render health checks
+    - Exposes runtime execution mode
+    """
+    return {
+        "status": "healthy",
+        **config.runtime_mode(),
+    }
+
+# ---------------------------
+# API routes
+# ---------------------------
 app.include_router(lesson.router)

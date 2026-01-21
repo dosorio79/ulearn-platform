@@ -34,6 +34,7 @@ const mockLesson: LessonResponse = {
 
 vi.mock('@/api/lessonClient', () => ({
   generateLesson: vi.fn(),
+  getHealth: vi.fn(),
 }));
 
 vi.mock('@/api/executeLocally', () => ({
@@ -52,6 +53,7 @@ const renderHome = () => {
 describe('Home Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(lessonClient.getHealth).mockResolvedValue({ status: 'healthy' });
   });
   afterEach(() => {
     vi.useRealTimers();

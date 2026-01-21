@@ -11,12 +11,21 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 ### Added
 - GitHub Actions CI workflow covering backend tests with MongoDB and frontend lint/test/build.
 - Content parsing test marker (`content_parse`) for clarity.
+- Static lesson mode and in-memory telemetry for Render demo deployments.
+- Render blueprint and frontend build script for static deployments.
+- Render demo env defaults and a `make start-demo` helper.
+- Demo mode alias, health flag for frontend badge, and in-memory telemetry cap.
+- Documented telemetry memory cap and demo alias for deployment.
+- Render CORS configuration for the static frontend and `/health` demo status flags.
 
 ### Changed
 - Frontend CI now includes a production build step.
 - Resolved frontend lint errors in CodeBlock, Tailwind config, and UI component types.
 - Added missing frontend `cn` utility to fix module resolution in tests.
 - Added timeout hint test id and exercise label to align UI with frontend tests.
+- Backend now tolerates invalid `TELEMETRY_MEMORY_CAP` values and defaults to 1000.
+- Docker backend reads `PORT` for Render deployments.
+- Makefile test targets sync dev dependencies via `uv sync --extra dev` before running tests.
 
 ### Docs
 - Documented CI behavior in the README and testing docs.

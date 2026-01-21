@@ -78,6 +78,10 @@ The backend reads environment variables from `.env` or the container environment
 - `USE_LLM_CONTENT`: toggle LLM-backed content generation (`true`/`false`)
 - `CORS_ORIGINS`: comma-separated list of allowed origins (default: `http://localhost:8080`)
 - `MONGO_FAILURE_COLLECTION`: MongoDB collection name for failure telemetry (default: `lesson_failures`)
+- `STATIC_LESSON_MODE`: serve static lesson templates instead of agent-generated content (`true`/`false`)
+- `TELEMETRY_BACKEND`: telemetry destination (`mongo` or `memory`)
+- `DEMO_MODE`: shorthand to enable demo defaults (static lessons + memory telemetry)
+- `TELEMETRY_MEMORY_CAP`: max in-memory telemetry entries when using `memory` (default: `1000`)
 
 ## Quick start
 
@@ -92,3 +96,22 @@ If images are already built:
 ```bash
 make start
 ```
+
+## Render demo deployment
+
+This repo includes a Render blueprint (`render.yaml`) that runs a static lesson demo with in-memory telemetry.
+
+What it does:
+- backend runs with `DEMO_MODE=true` (static lessons + memory telemetry)
+- frontend builds a static Vite app and injects `API_BASE` into `frontend/public/runtime-config.js`
+
+To use it:
+1) Update `render.yaml` with the backend URL you want (`API_BASE`).
+2) Create a new Render Blueprint from `render.yaml`.
+3) Deploy the backend first, then the static site.
+
+### Continuous deployment tips
+
+- Keep `autoDeploy: true` in `render.yaml` for both services.
+- Ensure the backend sets `CORS_ORIGINS` to the static site domain (for example, `https://ulearn-frontend.onrender.com`).
+- If the backend URL changes, update `API_BASE` and redeploy the static site.

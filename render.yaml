@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ulearn-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    autoDeploy: true
+
+    healthCheckPath: /health
+
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: STATIC_LESSON_MODE
+        value: "true"
+      - key: TELEMETRY_BACKEND
+        value: "memory"
+      - key: USE_LLM_CONTENT
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "https://ulearn-frontend.onrender.com"
