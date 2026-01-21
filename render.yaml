@@ -12,26 +12,21 @@ services:
     healthCheckPath: /health
 
     envVars:
-      # Demo convenience flag
       - key: DEMO_MODE
         value: "true"
-
-      # Explicit execution flags (defensive, future-proof)
       - key: STATIC_LESSON_MODE
         value: "true"
       - key: TELEMETRY_BACKEND
         value: "memory"
-
-      # Ensure no LLM calls in demo
       - key: USE_LLM_CONTENT
         value: "false"
       - key: CORS_ORIGINS
         value: "https://ulearn-frontend.onrender.com"
 
   # ---------------------------
-  # Frontend (Static Site)
+  # Frontend (Static site)
   # ---------------------------
-  - type: static_site
+  - type: static
     name: ulearn-frontend
     plan: free
     autoDeploy: true
