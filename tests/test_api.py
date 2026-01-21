@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from app.main import app
+from app.core import config
+from app.services import mongo
 import pytest
 
 pytestmark = pytest.mark.api
@@ -13,7 +15,8 @@ def test_health_endpoint():
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    body = response.json()
+    assert body["status"] == "healthy"
 
 
 def test_lesson_endpoint():
@@ -43,3 +46,20 @@ def test_lesson_inserts_telemetry():
         assert doc["topic"] == "x"
         assert doc["level"] == "beginner"
         assert "session_id" in doc
+
+
+def test_lesson_endpoint_static_mode(monkeypatch):
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", True)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+
+    response = client.post(
+        "/lesson",
+        json={"topic": "Pandas groupby performance", "level": "intermediate"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total_minutes"] == 15
+    assert "groupby" in body["sections"][1]["content_markdown"].lower()
+    assert mongo.get_memory_runs()

@@ -1,0 +1,44 @@
+services:
+  # ---------------------------
+  # Backend API (FastAPI)
+  # ---------------------------
+  - type: web
+    name: ulearn-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    autoDeploy: true
+
+    healthCheckPath: /health
+
+    envVars:
+      # Demo convenience flag
+      - key: DEMO_MODE
+        value: "true"
+
+      # Explicit execution flags (defensive, future-proof)
+      - key: STATIC_LESSON_MODE
+        value: "true"
+      - key: TELEMETRY_BACKEND
+        value: "memory"
+
+      # Ensure no LLM calls in demo
+      - key: USE_LLM_CONTENT
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "https://ulearn-frontend.onrender.com"
+
+  # ---------------------------
+  # Frontend (Static Site)
+  # ---------------------------
+  - type: static_site
+    name: ulearn-frontend
+    plan: free
+    autoDeploy: true
+
+    buildCommand: "bash scripts/render-frontend-build.sh"
+    publishPath: frontend/dist
+
+    envVars:
+      - key: API_BASE
+        value: "https://ulearn-backend.onrender.com"

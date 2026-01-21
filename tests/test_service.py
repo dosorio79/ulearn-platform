@@ -10,7 +10,9 @@ from pydantic import BaseModel, ValidationError
 from app.models.agents import ContentBlock, GeneratedSection
 from app.models.api import LessonRequest
 from app.models.db import LessonRun
+from app.core import config
 from app.services import lesson_service
+from app.services import mongo
 from app.services.lesson_service import generate_lesson
 
 pytestmark = pytest.mark.unit
@@ -45,6 +47,22 @@ def test_generate_lesson_returns_expected_structure():
     assert exercise_sections, "Expected an exercise section."
     assert ":::exercise\n" in exercise_sections[0].content_markdown
     assert "\n:::" in exercise_sections[0].content_markdown
+
+
+def test_generate_lesson_static_mode_uses_template(monkeypatch):
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", True)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+    request = LessonRequest(
+        topic="Pandas groupby performance",
+        level="intermediate",
+    )
+
+    response = asyncio.run(generate_lesson(request))
+
+    assert response.total_minutes == 15
+    assert "groupby" in response.sections[1].content_markdown.lower()
+    assert mongo.get_memory_runs()
 
 
 def test_lesson_run_validation_rejects_invalid_level():

@@ -7,6 +7,10 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      STATIC_LESSON_MODE: "false"
+      TELEMETRY_BACKEND: "mongo"
+      DEMO_MODE: "false"
     depends_on:
       - mongo
 

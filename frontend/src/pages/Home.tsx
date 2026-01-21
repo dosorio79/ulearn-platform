@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { LessonRenderer } from '@/components/LessonRenderer';
-import { generateLesson } from '@/api/lessonClient';
+import { generateLesson, getHealth } from '@/api/lessonClient';
 import { LessonResponse } from '@/types/lesson';
 import { Logo } from '@/components/Logo';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,6 +27,7 @@ const LOADING_MESSAGE_STEPS = [
 
 export default function Home() {
   const [topic, setTopic] = useState('');
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [level, setLevel] = useState<DifficultyLevel>('intermediate');
   const [isLoading, setIsLoading] = useState(false);
   const [lesson, setLesson] = useState<LessonResponse | null>(null);
@@ -63,6 +64,23 @@ export default function Home() {
     const timeout = setTimeout(() => setTopicNeedsAttention(false), 1600);
     return () => clearTimeout(timeout);
   }, [topicNeedsAttention]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getHealth()
+      .then((status) => {
+        if (cancelled) return;
+        setIsDemoMode(Boolean(status.demo_mode || status.static_lessons));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsDemoMode(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const submitLesson = async (nextTopic?: string) => {
     if (isLoading) return;
@@ -130,6 +148,11 @@ export default function Home() {
                 The best remedy for doomscrolling
               </p>
             </div>
+            {isDemoMode ? (
+              <span className="rounded-full border border-border bg-secondary/40 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-tone-secondary">
+                Demo mode – static lessons
+              </span>
+            ) : null}
           </div>
         </div>
       </header>
