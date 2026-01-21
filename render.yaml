@@ -1,7 +1,4 @@
 services:
-  # ---------------------------
-  # Backend API (FastAPI)
-  # ---------------------------
   - type: web
     name: ulearn-backend
     env: docker
@@ -22,18 +19,3 @@ services:
         value: "false"
       - key: CORS_ORIGINS
         value: "https://ulearn-frontend.onrender.com"
-
-  # ---------------------------
-  # Frontend (Static site)
-  # ---------------------------
-  - type: static
-    name: ulearn-frontend
-    plan: free
-    autoDeploy: true
-
-    buildCommand: "bash scripts/render-frontend-build.sh"
-    publishPath: frontend/dist
-
-    envVars:
-      - key: API_BASE
-        value: "https://ulearn-backend.onrender.com"
