@@ -1,4 +1,4 @@
-.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration frontend-build start-demo
+.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration test-frontend test-all frontend-build start-demo
 
 help:
 	@echo "Targets:"
@@ -12,6 +12,8 @@ help:
 	@echo "  test-api        Run API tests"
 	@echo "  test-content-parse Run content parsing tests"
 	@echo "  test-integration Run integration tests"
+	@echo "  test-frontend   Run frontend tests"
+	@echo "  test-all        Run backend and frontend tests"
 	@echo "  start-demo      Start demo mode backend (static lessons, in-memory telemetry)"
 
 frontend-build:
@@ -54,6 +56,11 @@ test-content-parse:
 test-integration:
 	@uv sync --extra dev
 	@uv run pytest -m integration
+
+test-frontend:
+	@cd frontend && npm test
+
+test-all: test test-frontend
 
 start-demo:
 	@STATIC_LESSON_MODE=true TELEMETRY_BACKEND=memory USE_LLM_CONTENT=false uv run uvicorn app.main:app --host 0.0.0.0 --port 8000

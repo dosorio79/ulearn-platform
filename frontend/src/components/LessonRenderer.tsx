@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LessonSection } from './LessonSection';
 import { LessonResponse } from '@/types/lesson';
+import { buildLessonFilename, lessonToNotebook } from '@/lib/notebook';
 
 interface LessonRendererProps {
   lesson: LessonResponse;
@@ -37,19 +38,23 @@ export function LessonRenderer({ lesson, onReset }: LessonRendererProps) {
     const blob = new Blob([buildLessonMarkdown()], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const topicMatch = lesson.objective.match(/^Learn (.+?) at a .+ level in 15 minutes\./i);
-    const topic = (topicMatch ? topicMatch[1] : lesson.objective)
-      .split(/\s+/)
-      .slice(0, 4)
-      .join(' ');
-    const slug = topic
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-      .slice(0, 32);
-    const date = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     link.href = url;
-    link.download = `ulearn-${slug || 'lesson'}-${date}.md`;
+    link.download = buildLessonFilename(lesson, 'md');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadNotebook = () => {
+    const notebook = lessonToNotebook(lesson);
+    const blob = new Blob([JSON.stringify(notebook, null, 2)], {
+      type: 'application/x-ipynb+json',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildLessonFilename(lesson, 'ipynb');
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -82,6 +87,10 @@ export function LessonRenderer({ lesson, onReset }: LessonRendererProps) {
             <Button variant="outline" size="sm" onClick={handleDownloadLesson} className="gap-2">
               <Download className="h-4 w-4" />
               Download .md
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDownloadNotebook} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download .ipynb
             </Button>
             <Button variant="outline" size="sm" onClick={onReset} className="gap-2">
               <RotateCcw className="h-4 w-4" />
