@@ -272,6 +272,8 @@ make test-unit
 make test-api
 make test-content-parse
 make test-integration
+make test-frontend
+make test-all
 ```
 
 ---

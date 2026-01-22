@@ -10,12 +10,15 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ### Added
 - Frontend export to Jupyter notebook (`.ipynb`) alongside Markdown.
+- Makefile targets for `test-frontend` and `test-all`.
 
 ### Changed
 - Stabilized frontend execution output tests by controlling mocked async resolution.
+- Stabilized frontend Run/Stop test by waiting for the stop button state.
 
 ### Docs
 - Documented notebook export in README and frontend docs.
+- Documented new Makefile test targets in README.
 
 ## [0.4.0] - 2026-01-21
 

@@ -28,6 +28,7 @@ dist/
 build/
 .parcel-cache/
 .vite/
+frontend/node_modules/.vite/vitest/
 
 # Editor / OS
 .vscode/

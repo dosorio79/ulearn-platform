@@ -293,7 +293,9 @@ describe('Home Page', () => {
       const runButton = screen.getByTestId('run-button');
       fireEvent.click(runButton);
 
-      expect(screen.getByTestId('stop-button')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('stop-button')).toBeInTheDocument();
+      });
 
       resolveRun({
         output: 'Done',
