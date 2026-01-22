@@ -27,13 +27,13 @@ Prompt editing guidance: `docs/prompts.md`
 5) Renderer converts blocks to Markdown for the API response.
 6) Persist telemetry (request metadata + output summary) after validating the telemetry record.
 7) Persist failure telemetry when validation or generation fails.
-7) Return the final `LessonResponse`.
+8) Return the final `LessonResponse`.
 
 ## Error handling
 
 - Validation raises `ValueError` for structural issues (empty content, duplicate IDs, too-short sections, impossible totals). These errors currently surface as 500s unless an API exception handler is added.
 - Generation errors return a 500 error and are logged to failure telemetry.
-- No retries or background processing are used.
+- When `USE_LLM_CONTENT=true`, schema/content validation failures trigger a single retry before surfacing errors.
 
 ## Data contracts
 
