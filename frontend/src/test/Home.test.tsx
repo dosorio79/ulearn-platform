@@ -291,16 +291,18 @@ describe('Home Page', () => {
       });
 
       const runButton = screen.getByTestId('run-button');
-      fireEvent.click(runButton);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('stop-button')).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(runButton);
       });
 
-      resolveRun({
-        output: 'Done',
-        error: null,
-        timestamp: new Date().toISOString(),
+      await screen.findByTestId('stop-button');
+
+      await act(async () => {
+        resolveRun({
+          output: 'Done',
+          error: null,
+          timestamp: new Date().toISOString(),
+        });
       });
 
       await waitFor(() => {
