@@ -107,7 +107,7 @@ Validation is intentionally strict to guarantee:
 Frontend UX includes:
 
 * Per-section copy buttons
-* Full-lesson Markdown export
+* Full-lesson Markdown and Jupyter notebook export
 * Feedback prompt and improved loading/error states
 
 A detailed description of agent responsibilities and orchestration is available in `docs/agent-architecture.md`.

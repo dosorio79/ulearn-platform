@@ -9,13 +9,13 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 ## [Unreleased]
 
 ### Added
-- _None._
+- Frontend export to Jupyter notebook (`.ipynb`) alongside Markdown.
 
 ### Changed
-- _None._
+- Stabilized frontend execution output tests by controlling mocked async resolution.
 
 ### Docs
-- _None._
+- Documented notebook export in README and frontend docs.
 
 ## [0.4.0] - 2026-01-21
 
