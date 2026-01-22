@@ -46,7 +46,7 @@ UI notes:
 - Home includes a short hero subline, a “Why it works” mini-row, and footer links.
 - Exercise blocks render from `:::exercise` fences (`:::exercise` + content + `:::`).
 - The loading bar shows elapsed seconds and the UI surfaces errors via a toast.
-- Sections include chip headers with copy actions; full lesson export is available.
+- Sections include chip headers with copy actions; full lesson export is available (Markdown + notebook).
 
 Set `VITE_API_BASE` in `frontend/.env` to change the backend URL (defaults to `http://localhost:8000`).
 The runtime config (`frontend/public/runtime-config.js`) can override this without a rebuild:
