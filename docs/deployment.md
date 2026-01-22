@@ -82,6 +82,7 @@ The backend reads environment variables from `.env` or the container environment
 - `TELEMETRY_BACKEND`: telemetry destination (`mongo` or `memory`)
 - `DEMO_MODE`: shorthand to enable demo defaults (static lessons + memory telemetry)
 - `TELEMETRY_MEMORY_CAP`: max in-memory telemetry entries when using `memory` (default: `1000`)
+- Telemetry records include `attempt_count` for generation retries.
 
 ## Quick start
 

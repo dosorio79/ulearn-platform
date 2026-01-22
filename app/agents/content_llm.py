@@ -43,11 +43,28 @@ class ContentAgentLLM:
     ) -> List[GeneratedSection]:
         prompt = self._build_prompt(topic, planned_sections)
 
-        result = self.agent.run(prompt)
-        if inspect.isawaitable(result):
-            result = await result
+        lesson = await self._run_prompt(prompt)
+        return self._to_generated_sections(lesson)
 
-        lesson = self._parse_llm_result(result)
+    async def generate_with_repair(
+        self,
+        topic: str,
+        planned_sections: List[PlannedSection],
+        error_summary: str,
+    ) -> List[GeneratedSection]:
+        prompt = self._build_prompt(topic, planned_sections)
+        prompt = (
+            f"{prompt}\n\n"
+            "The previous attempt failed validation. "
+            f"Error summary: {error_summary}\n"
+            "Regenerate the lesson to fully comply with the schema and rules.\n"
+            "- Return JSON only.\n"
+            "- Do not include code fences or commentary.\n"
+            "- Ensure required sections and block types.\n"
+            "- Ensure python blocks include imports and print output.\n"
+        )
+
+        lesson = await self._run_prompt(prompt)
         return self._to_generated_sections(lesson)
 
     def _build_prompt(self, topic: str, planned_sections: List[PlannedSection]) -> str:
@@ -81,6 +98,12 @@ class ContentAgentLLM:
 
         # Hard boundary: must match the declared schema
         return LLMLessonModel.model_validate(data)
+
+    async def _run_prompt(self, prompt: str) -> LLMLessonModel:
+        result = self.agent.run(prompt)
+        if inspect.isawaitable(result):
+            result = await result
+        return self._parse_llm_result(result)
 
     def _to_generated_sections(
         self,

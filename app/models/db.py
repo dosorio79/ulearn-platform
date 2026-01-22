@@ -18,6 +18,7 @@ class LessonRunModel(BaseModel):
     topic: str
     level: Literal["beginner", "intermediate"]
     created_at: datetime
+    attempt_count: int
     total_minutes: int
     objective: str
     section_ids: List[str]
@@ -30,6 +31,7 @@ class LessonFailureModel(BaseModel):
     topic: str
     level: Literal["beginner", "intermediate"]
     created_at: datetime
+    attempt_count: Optional[int] = None
     error_type: str
     error_message: str
     error_details: Optional[List[dict[str, Any]]] = None
@@ -47,6 +49,7 @@ class LessonRun:
     topic: str
     level: Literal["beginner", "intermediate"]
     created_at: datetime
+    attempt_count: int
     total_minutes: int
     objective: str
     section_ids: List[str]
@@ -60,6 +63,7 @@ class LessonRun:
             topic=self.topic,
             level=self.level,
             created_at=self.created_at,
+            attempt_count=self.attempt_count,
             total_minutes=self.total_minutes,
             objective=self.objective,
             section_ids=self.section_ids,
@@ -73,6 +77,7 @@ class LessonRun:
             "topic": self.topic,
             "level": self.level,
             "created_at": self.created_at,
+            "attempt_count": self.attempt_count,
             "total_minutes": self.total_minutes,
             "objective": self.objective,
             "section_ids": self.section_ids,
@@ -90,6 +95,7 @@ class LessonFailure:
     error_type: str
     error_message: str
     error_details: Optional[List[dict[str, Any]]] = None
+    attempt_count: Optional[int] = None
 
     def __post_init__(self) -> None:
         """Validate fields once at construction time."""
@@ -99,6 +105,7 @@ class LessonFailure:
             topic=self.topic,
             level=self.level,
             created_at=self.created_at,
+            attempt_count=self.attempt_count,
             error_type=self.error_type,
             error_message=self.error_message,
             error_details=self.error_details,
@@ -112,6 +119,7 @@ class LessonFailure:
             "topic": self.topic,
             "level": self.level,
             "created_at": self.created_at,
+            "attempt_count": self.attempt_count,
             "error_type": self.error_type,
             "error_message": self.error_message,
             "error_details": self.error_details,
