@@ -1,4 +1,5 @@
 Create a 15-minute lesson on "{topic}".
+Audience level: "{level}".
 
 Sections:
 {sections_desc}
@@ -15,6 +16,10 @@ Rules:
 - Each section must include at least one paragraph and either a bullet list or numbered list.
 - Total minutes must remain unchanged.
 - Return a JSON object with a top-level "sections" array only.
+
+Level guidance:
+- Beginner: define terms, avoid jargon, include short explanations, no assumed prior knowledge.
+- Intermediate: assume basic familiarity, go deeper on tradeoffs, edge cases, or nuanced reasoning.
 
 Performance guidance:
 - Prefer deterministic, reproducible examples.
