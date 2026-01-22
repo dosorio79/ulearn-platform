@@ -210,6 +210,10 @@ describe('Home Page', () => {
       // Click Run button
       fireEvent.click(runButton);
 
+      await waitFor(() => {
+        expect(executionClient.executeLocally).toHaveBeenCalled();
+      });
+
       await act(async () => {
         resolveRun({
           output: 'Hello from Python',
