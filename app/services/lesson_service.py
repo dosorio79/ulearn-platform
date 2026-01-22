@@ -34,6 +34,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
     """Generate a lesson and record telemetry (best-effort)."""
 
     session_id = str(request.session_id) if request.session_id else str(uuid4())
+    attempt_count = 1
 
     def _summarize_schema_errors(errors: Sequence[Mapping[str, object]]) -> str:
         if not errors:
@@ -58,60 +59,107 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
             request.level,
         )
 
-        try:
-            generated_sections = await content_agent.generate(
-                topic=request.topic,
-                planned_sections=planned_sections,
-            )
+        max_attempts = 2 if config.USE_LLM_CONTENT else 1
+        attempt = 0
+        prior_error_summary: str | None = None
 
-            validated_sections = validator_agent.validate(generated_sections)
-
-            response = LessonResponse(
-                objective=f"Learn {request.topic} at a {request.level} level in 15 minutes.",
-                total_minutes=15,
-                sections=[
-                    LessonSection(
-                        id=s.id,
-                        title=s.title,
-                        minutes=s.minutes,
-                        content_markdown=render_blocks_to_markdown(s.blocks),
+        while True:
+            attempt += 1
+            try:
+                if (
+                    attempt > 1
+                    and config.USE_LLM_CONTENT
+                    and prior_error_summary
+                    and hasattr(content_agent, "generate_with_repair")
+                ):
+                    generated_sections = await content_agent.generate_with_repair(
+                        topic=request.topic,
+                        planned_sections=planned_sections,
+                        error_summary=prior_error_summary,
                     )
-                    for s in validated_sections
-                ],
-            )
+                else:
+                    generated_sections = await content_agent.generate(
+                        topic=request.topic,
+                        planned_sections=planned_sections,
+                    )
 
-        except ValidationError as exc:
-            summary = _summarize_schema_errors(exc.errors())
-            _record_failure(
-                session_id=session_id,
-                request=request,
-                error_type="schema_validation",
-                error_message=summary,
-                error_details=exc.errors(),
-                exc=exc,
-            )
-            raise
+                validated_sections = validator_agent.validate(generated_sections)
 
-        except ValueError as exc:
-            summary = str(exc) or "Unknown content validation error."
-            _record_failure(
-                session_id=session_id,
-                request=request,
-                error_type="content_validation",
-                error_message=summary,
-                exc=exc,
-            )
-            raise
+                response = LessonResponse(
+                    objective=f"Learn {request.topic} at a {request.level} level in 15 minutes.",
+                    total_minutes=15,
+                    sections=[
+                        LessonSection(
+                            id=s.id,
+                            title=s.title,
+                            minutes=s.minutes,
+                            content_markdown=render_blocks_to_markdown(s.blocks),
+                        )
+                        for s in validated_sections
+                    ],
+                )
+                attempt_count = attempt
+                break
 
-        except Exception as exc:
-            _record_failure(
-                session_id=session_id,
-                request=request,
-                error_type=type(exc).__name__,
-                error_message=str(exc) or "Unknown error.",
-                exc=exc,
-            )
-            raise
+            except ValidationError as exc:
+                summary = _summarize_schema_errors(exc.errors())
+                if attempt >= max_attempts:
+                    _record_failure(
+                        session_id=session_id,
+                        request=request,
+                        error_type="schema_validation",
+                        error_message=summary,
+                        error_details=exc.errors(),
+                        attempt_count=attempt,
+                        exc=exc,
+                    )
+                    raise
+                prior_error_summary = summary
+                logger.info(
+                    "retrying_llm_generation_schema",
+                    extra={
+                        "session_id": session_id,
+                        "topic": request.topic,
+                        "difficulty": request.level,
+                        "attempt": attempt,
+                        "max_attempts": max_attempts,
+                    },
+                )
+
+            except ValueError as exc:
+                summary = str(exc) or "Unknown content validation error."
+                if attempt >= max_attempts:
+                    _record_failure(
+                        session_id=session_id,
+                        request=request,
+                        error_type="content_validation",
+                        error_message=summary,
+                        attempt_count=attempt,
+                        exc=exc,
+                    )
+                    raise
+                prior_error_summary = summary
+                logger.info(
+                    "retrying_llm_generation_content",
+                    extra={
+                        "session_id": session_id,
+                        "topic": request.topic,
+                        "difficulty": request.level,
+                        "attempt": attempt,
+                        "max_attempts": max_attempts,
+                    },
+                )
+
+            except Exception as exc:
+                _record_failure(
+                    session_id=session_id,
+                    request=request,
+                    error_type=type(exc).__name__,
+                    error_message=str(exc) or "Unknown error.",
+                    attempt_count=attempt,
+                    exc=exc,
+                )
+                raise
 
     # ---------------------------
     # Telemetry (best-effort)
@@ -122,6 +170,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         topic=request.topic,
         level=request.level,
         created_at=datetime.now(timezone.utc),
+        attempt_count=attempt_count,
         total_minutes=response.total_minutes,
         objective=response.objective,
         section_ids=[s.id for s in response.sections],
@@ -156,6 +205,7 @@ def _record_failure(
     error_type: str,
     error_message: str,
     error_details=None,
+    attempt_count: int | None = None,
     exc: Exception | None = None,
 ) -> None:
     """Best-effort failure telemetry."""
@@ -166,6 +216,7 @@ def _record_failure(
         topic=request.topic,
         level=request.level,
         created_at=datetime.now(timezone.utc),
+        attempt_count=attempt_count,
         error_type=error_type,
         error_message=error_message,
         error_details=error_details,

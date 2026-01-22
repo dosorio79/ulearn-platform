@@ -73,6 +73,7 @@ def test_lesson_run_validation_rejects_invalid_level():
             topic="vector databases",
             level="expert",
             created_at="2024-01-01T00:00:00Z",
+            attempt_count=1,
             total_minutes=15,
             objective="Learn vector databases at a beginner level in 15 minutes.",
             section_ids=["concept"],
@@ -86,6 +87,7 @@ def test_lesson_run_validation_accepts_valid_payload():
         topic="vector databases",
         level="beginner",
         created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        attempt_count=1,
         total_minutes=15,
         objective="Learn vector databases at a beginner level in 15 minutes.",
         section_ids=["concept"],
@@ -197,3 +199,124 @@ def test_generate_lesson_persists_content_failure(monkeypatch):
     failure_doc = insert_failure.call_args[0][0]
     assert failure_doc["error_type"] == "content_validation"
     assert failure_doc["topic"] == request.topic
+    assert failure_doc["attempt_count"] == 1
+
+
+def test_generate_lesson_retries_schema_failure_with_llm(monkeypatch):
+    request = LessonRequest(
+        session_id="e8f94f79-30b7-49a6-8d59-8d6061a36b55",
+        topic="vector databases",
+        level="beginner",
+    )
+    validation_error = _make_validation_error()
+
+    class DummyPlanner:
+        def plan(self, topic: str, level: str):
+            return []
+
+    class DummyContent:
+        def __init__(self):
+            self.calls = 0
+            self.repair_calls = 0
+
+        async def generate(self, topic: str, planned_sections):
+            self.calls += 1
+            raise validation_error
+
+        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+            self.repair_calls += 1
+            return [
+                GeneratedSection(
+                    id="concept",
+                    title="Concept",
+                    minutes=5,
+                    blocks=[ContentBlock(type="text", content="Paragraph.\n\n- bullet\n\n1. step")],
+                ),
+                GeneratedSection(
+                    id="example",
+                    title="Example",
+                    minutes=5,
+                    blocks=[
+                        ContentBlock(type="text", content="Paragraph.\n\n- bullet\n\n1. step"),
+                        ContentBlock(
+                            type="python",
+                            content="import pandas as pd\n\nprint('ok')",
+                        ),
+                    ],
+                ),
+                GeneratedSection(
+                    id="exercise",
+                    title="Exercise",
+                    minutes=5,
+                    blocks=[ContentBlock(type="exercise", content="Do the thing.")],
+                ),
+            ]
+
+    class DummyValidator:
+        def validate(self, sections):
+            return sections
+
+    insert_failure = Mock()
+    insert_run = Mock()
+    dummy_content = DummyContent()
+
+    monkeypatch.setattr(config, "USE_LLM_CONTENT", True)
+    monkeypatch.setattr(lesson_service, "planner_agent", DummyPlanner())
+    monkeypatch.setattr(lesson_service, "content_agent", dummy_content)
+    monkeypatch.setattr(lesson_service, "validator_agent", DummyValidator())
+    monkeypatch.setattr(lesson_service, "insert_lesson_failure", insert_failure)
+    monkeypatch.setattr(lesson_service, "insert_lesson_run", insert_run)
+
+    response = asyncio.run(lesson_service.generate_lesson(request))
+
+    assert response.sections
+    assert dummy_content.calls == 1
+    assert dummy_content.repair_calls == 1
+    assert not insert_failure.called
+
+
+def test_generate_lesson_records_attempts_on_retry_exhaustion(monkeypatch):
+    request = LessonRequest(
+        session_id="e8f94f79-30b7-49a6-8d59-8d6061a36b55",
+        topic="vector databases",
+        level="beginner",
+    )
+
+    class DummyPlanner:
+        def plan(self, topic: str, level: str):
+            return []
+
+    class DummyContent:
+        def __init__(self):
+            self.calls = 0
+            self.repair_calls = 0
+
+        async def generate(self, topic: str, planned_sections):
+            self.calls += 1
+            raise ValueError("Bad python block")
+
+        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+            self.repair_calls += 1
+            raise ValueError("Still bad")
+
+    class DummyValidator:
+        def validate(self, sections):
+            return sections
+
+    insert_failure = Mock()
+    dummy_content = DummyContent()
+
+    monkeypatch.setattr(config, "USE_LLM_CONTENT", True)
+    monkeypatch.setattr(lesson_service, "planner_agent", DummyPlanner())
+    monkeypatch.setattr(lesson_service, "content_agent", dummy_content)
+    monkeypatch.setattr(lesson_service, "validator_agent", DummyValidator())
+    monkeypatch.setattr(lesson_service, "insert_lesson_failure", insert_failure)
+
+    with pytest.raises(ValueError):
+        asyncio.run(lesson_service.generate_lesson(request))
+
+    assert dummy_content.calls == 1
+    assert dummy_content.repair_calls == 1
+    assert insert_failure.called
+    failure_doc = insert_failure.call_args[0][0]
+    assert failure_doc["attempt_count"] == 2

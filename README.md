@@ -115,6 +115,7 @@ Each lesson generation run is logged, including:
 - Session identifier
 - Request parameters
 - Output summary (objective, total minutes, section IDs)
+- Attempt count (number of generation attempts needed)
 - Timestamp
 
 Failure cases (schema validation, content validation, unexpected exceptions) are recorded separately for post-mortem analysis.
