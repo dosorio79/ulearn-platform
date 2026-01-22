@@ -221,11 +221,11 @@ describe('Home Page', () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
       vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
       vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
-      vi.mocked(executionClient.executeLocally).mockResolvedValue({
-        output: '',
-        error: null,
-        timestamp: new Date().toISOString(),
+      let resolveRun: (value: { output: string; error: string | null; timestamp: string }) => void = () => {};
+      const runPromise = new Promise<{ output: string; error: string | null; timestamp: string }>((resolve) => {
+        resolveRun = resolve;
       });
+      vi.mocked(executionClient.executeLocally).mockReturnValue(runPromise);
 
       renderHome();
 
@@ -241,6 +241,14 @@ describe('Home Page', () => {
 
       const runButton = screen.getByTestId('run-button');
       fireEvent.click(runButton);
+
+      await act(async () => {
+        resolveRun({
+          output: '',
+          error: null,
+          timestamp: new Date().toISOString(),
+        });
+      });
 
       await waitFor(() => {
         expect(screen.getByTestId('execution-output-empty')).toBeInTheDocument();
