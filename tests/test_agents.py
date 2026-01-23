@@ -43,6 +43,7 @@ def test_content_llm_prompt_template_formats():
     assert "{topic}" not in prompt
     assert "{sections_desc}" not in prompt
     assert '"sections"' in prompt
+    assert 'Audience level: "beginner"' in prompt
 
 
 def _formatted_text(prefix: str) -> str:

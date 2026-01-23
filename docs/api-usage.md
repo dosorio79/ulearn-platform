@@ -79,6 +79,7 @@ Expected response: `200 OK`
 - `500` for generation errors.
 
 Backend failures are logged to MongoDB failure telemetry for troubleshooting.
+When `USE_LLM_CONTENT=true`, the backend will retry once if the model output fails schema or content validation.
 
 ## Frontend note
 
