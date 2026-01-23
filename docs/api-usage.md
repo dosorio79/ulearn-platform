@@ -18,7 +18,7 @@ Request body (`LessonRequest`):
 
 - `session_id` (optional, UUID): Client-provided identifier for telemetry.
 - `topic` (string, required): The learning topic.
-- `level` (string, required): `beginner` or `intermediate`.
+- `level` (string, required): `beginner` or `intermediate`. Intermediate lessons allocate more minutes to the example section.
 
 Response body (`LessonResponse`):
 

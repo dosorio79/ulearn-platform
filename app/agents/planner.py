@@ -8,21 +8,25 @@ class PlannerAgent:
     """Generates a deterministic lesson plan."""
     def plan(self, topic: str, level: str) -> List[PlannedSection]:
         """Return a section outline based on topic and level."""
+        if level == "intermediate":
+            minutes = {"concept": 4, "example": 7, "exercise": 4}
+        else:
+            minutes = {"concept": 5, "example": 6, "exercise": 4}
         return [
             PlannedSection(
                 id="concept",
                 title="Core concept",
-                minutes=5,
+                minutes=minutes["concept"],
             ),
             PlannedSection(
                 id="example",
                 title="Worked example",
-                minutes=6,
+                minutes=minutes["example"],
             ),
             PlannedSection(
                 id="exercise",
                 title="Practice exercise",
-                minutes=4,
+                minutes=minutes["exercise"],
             ),
         ]
         

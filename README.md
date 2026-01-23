@@ -66,6 +66,7 @@ Lesson generation is implemented using multiple cooperating agents:
 - **ContentAgent** – generates structured content blocks (stub implementation)
 - **ContentAgentLLM** – optional LLM-backed content generator
 - **ValidatorAgent** – enforces structure (required sections, block formatting) and normalizes section minutes to a 15-minute total
+- **PlannerAgent** – allocates section minutes by difficulty (intermediate shifts more time into the example)
 
 Only the content generation step uses an LLM; planning and validation are deterministic and fully testable.
 
