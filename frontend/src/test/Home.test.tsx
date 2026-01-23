@@ -208,7 +208,9 @@ describe('Home Page', () => {
       expect(runButton).toBeInTheDocument();
 
       // Click Run button
-      fireEvent.click(runButton);
+      await act(async () => {
+        fireEvent.click(runButton);
+      });
 
       await waitFor(() => {
         expect(executionClient.executeLocally).toHaveBeenCalled();
@@ -223,9 +225,7 @@ describe('Home Page', () => {
       });
 
       // Verify execution output appears
-      await waitFor(() => {
-        expect(screen.getByTestId('execution-output')).toBeInTheDocument();
-      });
+      await screen.findByTestId('execution-output');
       expect(screen.getByText(/hello from python/i)).toBeInTheDocument();
     });
 
