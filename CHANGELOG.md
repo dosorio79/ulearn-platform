@@ -8,6 +8,8 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-23
+
 ### Added
 - Frontend export to Jupyter notebook (`.ipynb`) alongside Markdown.
 - Makefile targets for `test-frontend` and `test-all`.
