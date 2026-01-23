@@ -97,6 +97,20 @@ AI-assisted development constraints are defined in `AGENTS.md`.
 
 ---
 
+## V1 goals (planned)
+
+The V1 focus is on tool-augmented validation and learning-quality telemetry:
+
+- MCP-backed content validation (tools arbitrate correctness)
+- Explicit content contracts (schema + semantic constraints)
+- First-class telemetry for learning quality, not just errors
+- Deterministic lesson rebuilds for testing/review
+- Clear agent boundaries (planner, content, validator, MCP tools)
+
+See `docs/v1-goals.md` for full details and near-term steps.
+
+---
+
 ## Frontend code execution
 
 The frontend can execute Python snippets in lessons using **Pyodide** (running in the browser).
