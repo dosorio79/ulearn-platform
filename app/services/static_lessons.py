@@ -4,7 +4,20 @@ from app.models.agents import ContentBlock
 from app.models.api import LessonResponse, LessonSection
 from app.services.markdown_renderer import render_blocks_to_markdown
 
-_SECTION_MINUTES = 5
+_SECTION_MINUTES = {
+    "beginner": {"concept": 5, "example": 6, "exercise": 4},
+    "intermediate": {"concept": 4, "example": 7, "exercise": 4},
+}
+_LEVEL_GUIDANCE = {
+    "beginner": {
+        "concept": "Beginner focus: define terms plainly and keep the first example concrete.",
+        "exercise": "Beginner focus: keep the dataset tiny and explain each step.",
+    },
+    "intermediate": {
+        "concept": "Intermediate focus: highlight tradeoffs and note a common pitfall.",
+        "exercise": "Intermediate focus: add one constraint or edge case.",
+    },
+}
 
 _STATIC_TEMPLATES: dict[str, dict[str, str]] = {
     "statistical tests comparing population means": {
@@ -129,24 +142,34 @@ def _generic_template(topic: str) -> dict[str, str]:
     }
 
 
+def _with_level_guidance(content: str, level: str, section: str) -> str:
+    guidance = _LEVEL_GUIDANCE.get(level, {}).get(section)
+    if not guidance:
+        return content
+    return f"{content}\n\n{guidance}"
+
+
 def build_static_lesson(topic: str, level: str) -> LessonResponse:
     """Return a deterministic, static lesson response."""
     normalized = topic.strip().lower()
     template = _STATIC_TEMPLATES.get(normalized) or _generic_template(topic)
+    concept_text = _with_level_guidance(template["concept"], level, "concept")
+    exercise_text = _with_level_guidance(template["exercise"], level, "exercise")
+    minutes = _SECTION_MINUTES.get(level, _SECTION_MINUTES["beginner"])
 
     sections = [
         LessonSection(
             id="concept",
             title="Core idea",
-            minutes=_SECTION_MINUTES,
+            minutes=minutes["concept"],
             content_markdown=render_blocks_to_markdown(
-                [ContentBlock(type="text", content=template["concept"])]
+                [ContentBlock(type="text", content=concept_text)]
             ),
         ),
         LessonSection(
             id="example",
             title="Worked example",
-            minutes=_SECTION_MINUTES,
+            minutes=minutes["example"],
             content_markdown=render_blocks_to_markdown(
                 [
                     ContentBlock(type="text", content=template["example"]),
@@ -157,9 +180,9 @@ def build_static_lesson(topic: str, level: str) -> LessonResponse:
         LessonSection(
             id="exercise",
             title="Try it yourself",
-            minutes=_SECTION_MINUTES,
+            minutes=minutes["exercise"],
             content_markdown=render_blocks_to_markdown(
-                [ContentBlock(type="exercise", content=template["exercise"])]
+                [ContentBlock(type="exercise", content=exercise_text)]
             ),
         ),
     ]

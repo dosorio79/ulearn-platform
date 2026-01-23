@@ -35,6 +35,7 @@ def test_generate_lesson_returns_expected_structure():
     assert sum(section.minutes for section in response.sections) == 15
     assert response.sections[0].id == "concept"
     assert response.sections[0].title == "Core concept"
+    assert [section.minutes for section in response.sections] == [5, 6, 4]
     assert response.sections[0].content_markdown == (
         "This section introduces the key ideas behind vector databases.\n\n"
         "- Define the core concept in one sentence.\n"
@@ -61,8 +62,19 @@ def test_generate_lesson_static_mode_uses_template(monkeypatch):
     response = asyncio.run(generate_lesson(request))
 
     assert response.total_minutes == 15
+    assert [section.minutes for section in response.sections] == [4, 7, 4]
     assert "groupby" in response.sections[1].content_markdown.lower()
     assert mongo.get_memory_runs()
+
+
+def test_static_lesson_includes_level_guidance():
+    from app.services.static_lessons import build_static_lesson
+
+    beginner_lesson = build_static_lesson("Pandas groupby performance", "beginner")
+    intermediate_lesson = build_static_lesson("Pandas groupby performance", "intermediate")
+
+    assert "Beginner focus" in beginner_lesson.sections[0].content_markdown
+    assert "Intermediate focus" in intermediate_lesson.sections[0].content_markdown
 
 
 def test_lesson_run_validation_rejects_invalid_level():
@@ -124,7 +136,7 @@ def test_generate_lesson_persists_schema_failure(monkeypatch):
         def __init__(self, exc: ValidationError):
             self.exc = exc
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             raise self.exc
 
     class DummyValidator:
@@ -159,7 +171,7 @@ def test_generate_lesson_persists_content_failure(monkeypatch):
             return []
 
     class DummyContent:
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             return [
                 GeneratedSection(
                     id="concept",
@@ -219,11 +231,17 @@ def test_generate_lesson_retries_schema_failure_with_llm(monkeypatch):
             self.calls = 0
             self.repair_calls = 0
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             self.calls += 1
             raise validation_error
 
-        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+        async def generate_with_repair(
+            self,
+            topic: str,
+            level: str,
+            planned_sections,
+            error_summary: str,
+        ):
             self.repair_calls += 1
             return [
                 GeneratedSection(
@@ -291,11 +309,17 @@ def test_generate_lesson_records_attempts_on_retry_exhaustion(monkeypatch):
             self.calls = 0
             self.repair_calls = 0
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             self.calls += 1
             raise ValueError("Bad python block")
 
-        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+        async def generate_with_repair(
+            self,
+            topic: str,
+            level: str,
+            planned_sections,
+            error_summary: str,
+        ):
             self.repair_calls += 1
             raise ValueError("Still bad")
 

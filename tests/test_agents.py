@@ -38,7 +38,7 @@ def test_content_llm_prompt_template_formats():
         types.SimpleNamespace(id="exercise", title="Exercise", minutes=4),
     ]
 
-    prompt = agent._build_prompt("pandas groupby performance", planned_sections)
+    prompt = agent._build_prompt("pandas groupby performance", "beginner", planned_sections)
 
     assert "{topic}" not in prompt
     assert "{sections_desc}" not in prompt

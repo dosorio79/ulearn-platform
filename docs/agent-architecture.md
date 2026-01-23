@@ -8,7 +8,7 @@ The system is stateless from a user perspective. Persistence is limited to appen
 
 ## Agents and responsibilities
 
-- PlannerAgent: Creates the lesson outline, section titles, and time budget per section.
+- PlannerAgent: Creates the lesson outline, section titles, and time budget per section (intermediate shifts minutes toward the example).
 - ContentAgent: Generates structured content blocks for each planned section (stub).
 - ContentAgentLLM: Optional LLM-backed content generator (toggle via `USE_LLM_CONTENT`).
 - ValidatorAgent: Enforces structural guardrails (required section IDs, valid blocks, formatting rules, minimum minutes) and normalizes total time to 15 minutes.
