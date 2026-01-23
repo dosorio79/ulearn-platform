@@ -262,9 +262,7 @@ describe('Home Page', () => {
         });
       });
 
-      await waitFor(() => {
-        expect(screen.getByTestId('execution-output-empty')).toBeInTheDocument();
-      });
+      await screen.findByTestId('execution-output-empty');
       expect(screen.getByText(/no output yet/i)).toBeInTheDocument();
     });
 

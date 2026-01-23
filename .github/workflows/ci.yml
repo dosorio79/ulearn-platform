@@ -44,7 +44,7 @@ jobs:
         run: uv sync --extra dev --frozen
 
       - name: Run backend tests
-        run: uv run pytest
+        run: make test
 
 
   frontend-tests:
@@ -72,8 +72,7 @@ jobs:
         run: npm run lint
 
       - name: Run frontend tests
-        working-directory: frontend
-        run: npm test
+        run: make test-frontend
 
       - name: Build frontend
         working-directory: frontend

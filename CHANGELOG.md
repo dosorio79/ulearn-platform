@@ -8,6 +8,14 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+### Changed
+- CI runs backend/frontend tests via Makefile targets.
+- Hardened frontend execution-output tests to reduce flakiness.
+- Added prompt-level assertion for audience level in LLM unit tests.
+
+### Docs
+- Documented LLM retry behavior in API usage docs.
+
 ## [0.5.0] - 2026-01-23
 
 ### Added
