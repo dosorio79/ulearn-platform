@@ -63,6 +63,7 @@ def test_lesson_endpoint_static_mode(monkeypatch):
     body = response.json()
     assert body["total_minutes"] == 15
     assert "groupby" in body["sections"][1]["content_markdown"].lower()
+    assert "Intermediate focus" in body["sections"][0]["content_markdown"]
     assert mongo.get_memory_runs()
 
 

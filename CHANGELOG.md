@@ -17,7 +17,8 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 - Stabilized frontend Run/Stop test by waiting for the stop button state.
 - Retried LLM lesson generation once on schema or content validation failures.
 - Recorded attempt counts in lesson telemetry.
-- Added level-specific guidance to the LLM content prompt.
+- Added level-specific guidance text to static lesson templates.
+- Adjusted planner minute split for intermediate lessons.
 
 ### Docs
 - Documented notebook export in README and frontend docs.

@@ -35,6 +35,7 @@ def test_generate_lesson_returns_expected_structure():
     assert sum(section.minutes for section in response.sections) == 15
     assert response.sections[0].id == "concept"
     assert response.sections[0].title == "Core concept"
+    assert [section.minutes for section in response.sections] == [5, 6, 4]
     assert response.sections[0].content_markdown == (
         "This section introduces the key ideas behind vector databases.\n\n"
         "- Define the core concept in one sentence.\n"
@@ -61,8 +62,19 @@ def test_generate_lesson_static_mode_uses_template(monkeypatch):
     response = asyncio.run(generate_lesson(request))
 
     assert response.total_minutes == 15
+    assert [section.minutes for section in response.sections] == [4, 7, 4]
     assert "groupby" in response.sections[1].content_markdown.lower()
     assert mongo.get_memory_runs()
+
+
+def test_static_lesson_includes_level_guidance():
+    from app.services.static_lessons import build_static_lesson
+
+    beginner_lesson = build_static_lesson("Pandas groupby performance", "beginner")
+    intermediate_lesson = build_static_lesson("Pandas groupby performance", "intermediate")
+
+    assert "Beginner focus" in beginner_lesson.sections[0].content_markdown
+    assert "Intermediate focus" in intermediate_lesson.sections[0].content_markdown
 
 
 def test_lesson_run_validation_rejects_invalid_level():
