@@ -124,7 +124,7 @@ def test_generate_lesson_persists_schema_failure(monkeypatch):
         def __init__(self, exc: ValidationError):
             self.exc = exc
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             raise self.exc
 
     class DummyValidator:
@@ -159,7 +159,7 @@ def test_generate_lesson_persists_content_failure(monkeypatch):
             return []
 
     class DummyContent:
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             return [
                 GeneratedSection(
                     id="concept",
@@ -219,11 +219,17 @@ def test_generate_lesson_retries_schema_failure_with_llm(monkeypatch):
             self.calls = 0
             self.repair_calls = 0
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             self.calls += 1
             raise validation_error
 
-        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+        async def generate_with_repair(
+            self,
+            topic: str,
+            level: str,
+            planned_sections,
+            error_summary: str,
+        ):
             self.repair_calls += 1
             return [
                 GeneratedSection(
@@ -291,11 +297,17 @@ def test_generate_lesson_records_attempts_on_retry_exhaustion(monkeypatch):
             self.calls = 0
             self.repair_calls = 0
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             self.calls += 1
             raise ValueError("Bad python block")
 
-        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+        async def generate_with_repair(
+            self,
+            topic: str,
+            level: str,
+            planned_sections,
+            error_summary: str,
+        ):
             self.repair_calls += 1
             raise ValueError("Still bad")
 

@@ -39,9 +39,10 @@ class ContentAgentLLM:
     async def generate(
         self,
         topic: str,
+        level: str,
         planned_sections: List[PlannedSection],
     ) -> List[GeneratedSection]:
-        prompt = self._build_prompt(topic, planned_sections)
+        prompt = self._build_prompt(topic, level, planned_sections)
 
         lesson = await self._run_prompt(prompt)
         return self._to_generated_sections(lesson)
@@ -49,10 +50,11 @@ class ContentAgentLLM:
     async def generate_with_repair(
         self,
         topic: str,
+        level: str,
         planned_sections: List[PlannedSection],
         error_summary: str,
     ) -> List[GeneratedSection]:
-        prompt = self._build_prompt(topic, planned_sections)
+        prompt = self._build_prompt(topic, level, planned_sections)
         prompt = (
             f"{prompt}\n\n"
             "The previous attempt failed validation. "
@@ -67,7 +69,7 @@ class ContentAgentLLM:
         lesson = await self._run_prompt(prompt)
         return self._to_generated_sections(lesson)
 
-    def _build_prompt(self, topic: str, planned_sections: List[PlannedSection]) -> str:
+    def _build_prompt(self, topic: str, level: str, planned_sections: List[PlannedSection]) -> str:
         sections_desc = "\n".join(
             f"- id: {s.id}, title: {s.title}, minutes: {s.minutes}"
             for s in planned_sections
@@ -76,6 +78,7 @@ class ContentAgentLLM:
         template = USER_PROMPT_PATH.read_text(encoding="utf-8")
         return template.format(
             topic=topic,
+            level=level,
             sections_desc=sections_desc,
         ).strip()
 
