@@ -74,12 +74,14 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                 ):
                     generated_sections = await content_agent.generate_with_repair(
                         topic=request.topic,
+                        level=request.level,
                         planned_sections=planned_sections,
                         error_summary=prior_error_summary,
                     )
                 else:
                     generated_sections = await content_agent.generate(
                         topic=request.topic,
+                        level=request.level,
                         planned_sections=planned_sections,
                     )
 

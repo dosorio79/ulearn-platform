@@ -84,11 +84,17 @@ def test_lesson_endpoint_retries_llm_failures(monkeypatch):
             self.calls = 0
             self.repair_calls = 0
 
-        async def generate(self, topic: str, planned_sections):
+        async def generate(self, topic: str, level: str, planned_sections):
             self.calls += 1
             raise ValueError("Bad formatting")
 
-        async def generate_with_repair(self, topic: str, planned_sections, error_summary: str):
+        async def generate_with_repair(
+            self,
+            topic: str,
+            level: str,
+            planned_sections,
+            error_summary: str,
+        ):
             self.repair_calls += 1
             return [
                 GeneratedSection(

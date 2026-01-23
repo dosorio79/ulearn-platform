@@ -20,6 +20,7 @@ class ContentAgent:
     async def generate(
         self,
         topic: str,
+        level: str,
         planned_sections: List[PlannedSection],
     ) -> List[GeneratedSection]:
         generated_sections: List[GeneratedSection] = []
