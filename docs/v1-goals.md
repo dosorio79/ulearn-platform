@@ -33,6 +33,14 @@ steps needed to reach them without expanding scope or adding new endpoints.
 - Validator: orchestration + MCP calls.
 - MCP tools: authority on correctness.
 
+## Nice-to-have (if time)
+
+6) Runnable exercise panel with LLM feedback
+- Add a UI panel for running exercise code.
+- On completion, call the LLM to provide evaluation feedback.
+- Record thumbs up/down feedback for each lesson.
+- Keep evaluation stateless; no user accounts or grading history.
+
 ## Near-term steps (small, safe advances)
 
 - Introduce typed validation reasons in the validator and telemetry.
