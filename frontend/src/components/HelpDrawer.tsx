@@ -3,7 +3,7 @@ import remarkGfm from 'remark-gfm';
 import { HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 import helpContent from '../../../HELP.md?raw';
 import helpUrl from '../../../HELP.md?url';
@@ -24,6 +24,7 @@ export function HelpDrawer({ triggerLabel = 'Help' }: HelpDrawerProps) {
       <SheetContent side="right" className="flex h-full flex-col">
         <SheetHeader className="text-left">
           <SheetTitle>Help</SheetTitle>
+          <SheetDescription>Quick guidance for getting the most out of each lesson.</SheetDescription>
         </SheetHeader>
         <ScrollArea className="mt-4 h-full pr-4">
           <div className="prose prose-sm max-w-none text-tone-secondary">
