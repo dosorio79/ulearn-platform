@@ -8,6 +8,10 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+### Docs
+- Added V1 goals and near-term steps documentation.
+- Captured V1 nice-to-have UX goals for exercise feedback.
+
 ### Changed
 - CI runs backend/frontend tests via Makefile targets.
 - Hardened frontend execution-output tests to reduce flakiness.
