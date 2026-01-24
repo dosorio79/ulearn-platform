@@ -177,10 +177,10 @@ export default function Home() {
                   Learn something new in <span className="whitespace-nowrap">15 minutes</span>
                 </h2>
                 <p className="text-base text-tone-secondary leading-relaxed">
-                  Short lessons, clear takeaways, zero doomscrolling.
+                  Short, focused lessons on Python and data.
                 </p>
                 <p className="text-base text-tone-secondary leading-relaxed">
-                  Enter a data or Python topic. We’ll handle the thinking.
+                  Clear takeaways, runnable examples, zero doomscrolling.
                 </p>
               </div>
 
