@@ -16,7 +16,7 @@
 - Code executes **locally in your browser**  
 - First run may take a moment while the runtime loads  
 - Output appears below the code block  
-- Python blocks are editable for quick fixes; use **Reset** to restore the original snippet  
+- Use **Edit** to enable local changes; use **Reset** to restore the original snippet  
 
 **Notes**
 - Execution is sandboxed (no file or network access)

@@ -117,7 +117,7 @@ The frontend can execute Python snippets in lessons using **Pyodide** (running i
 
 - Python code blocks include a *Run* button and display stdout output
 - If a snippet does not produce output, the UI prompts the learner to add `print(...)`
-- Python blocks are editable for quick fixes; use Reset to restore the original snippet
+- Python blocks are read-only by default; use Edit for quick fixes and Reset to restore the original snippet
 - Exports always use the original generated lesson content
 
 You can override the Pyodide base URL with `VITE_PYODIDE_BASE`
