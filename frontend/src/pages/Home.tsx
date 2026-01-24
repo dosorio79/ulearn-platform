@@ -203,8 +203,7 @@ export default function Home() {
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          Keep it narrow for a 15-minute lesson, e.g., "pandas groupby performance" or "Python list
-                          comprehensions".
+                          Keep it narrow for a 15-minute lesson, e.g., "pandas groupby performance".
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -212,7 +211,7 @@ export default function Home() {
                   <Input
                     id="topic"
                     type="text"
-                    placeholder="e.g., pandas groupby performance or Python list comprehensions"
+                    placeholder="e.g., pandas groupby performance"
                     value={topic}
                     onChange={(e) => {
                       setTopic(e.target.value);
@@ -235,14 +234,14 @@ export default function Home() {
                       type="button"
                       onClick={() =>
                         handleQuickExample(
-                          'SQL window functions for ranking',
+                          'statistical tests comparing population means',
                           'intermediate',
                         )
                       }
                       className="rounded-full border border-border bg-background px-2 py-0.5 text-tone-secondary transition-colors hover:text-tone-primary"
                       disabled={isLoading}
                     >
-                      SQL window functions for ranking
+                      statistical tests comparing population means
                     </button>
                     <button
                       type="button"
@@ -254,11 +253,11 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleQuickExample('Python list comprehensions', 'beginner')}
+                      onClick={() => handleQuickExample('Supervised versus unsupervised modeling', 'beginner')}
                       className="rounded-full border border-border bg-background px-2 py-0.5 text-tone-secondary transition-colors hover:text-tone-primary"
                       disabled={isLoading}
                     >
-                      Python list comprehensions
+                      Supervised versus unsupervised modeling
                     </button>
                     <button
                       type="button"
