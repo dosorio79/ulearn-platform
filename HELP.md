@@ -16,6 +16,7 @@
 - Code executes **locally in your browser**  
 - First run may take a moment while the runtime loads  
 - Output appears below the code block  
+- Python blocks are editable for quick fixes; use **Reset** to restore the original snippet  
 
 **Notes**
 - Execution is sandboxed (no file or network access)
@@ -31,6 +32,7 @@
 - Copy lesson content as **Markdown**
 - Download lessons as `.md` or `.ipynb`
 - Exports reflect the lesson at generation time  
+- Exports use the original generated lesson content, not local edits  
 
 ## Limitations
 - Broad topics may feel compressed  
