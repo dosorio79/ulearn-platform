@@ -17,6 +17,8 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [runPhase, setRunPhase] = useState<'idle' | 'loading' | 'running'>('idle');
   const [outputCopied, setOutputCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [highlightMounted, setHighlightMounted] = useState(false);
   const runIdRef = useRef(0);
   const EXECUTION_TIMEOUT_MS = 10000;
 
@@ -25,6 +27,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const [editableCode, setEditableCode] = useState(code);
   const activeCode = isPython ? editableCode : code;
   const hasEdits = isPython && editableCode !== code;
+  const shouldShowHighlight = highlightMounted && isPython && !isEditing && !hasEdits;
   const panelBorderClass = isPython ? 'border-neutral-800' : 'border-border';
   const headerClass = isPython
     ? 'bg-neutral-950 text-neutral-200 border-neutral-800'
@@ -35,6 +38,10 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   useEffect(() => {
     setEditableCode(code);
   }, [code]);
+
+  useEffect(() => {
+    setHighlightMounted(true);
+  }, []);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(activeCode);
@@ -148,7 +155,12 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
         {isPython ? (
           <div className="flex flex-col leading-tight">
             <span className={labelClass}>Runnable example</span>
-            <span className={`text-sm font-mono ${languageClass}`}>{language}</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-mono ${languageClass}`}>{language}</span>
+              <span className="rounded-full border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-[0.55rem] uppercase tracking-wide text-neutral-400">
+                Editable
+              </span>
+            </div>
           </div>
         ) : (
           <span className={`text-sm font-mono ${languageClass}`}>{language}</span>
@@ -211,14 +223,38 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
         </div>
       </div>
       {isPython ? (
-        <textarea
-          className="min-h-[160px] w-full resize-y bg-[#0b0b0b] px-4 py-3 font-mono text-xs text-neutral-100 outline-none"
-          value={editableCode}
-          onChange={(event) => setEditableCode(event.target.value)}
-          aria-label="Python code editor"
-          data-testid="python-code-editor"
-          spellCheck={false}
-        />
+        <div className="relative">
+          {shouldShowHighlight && (
+            <div className="pointer-events-none absolute inset-0">
+              <SyntaxHighlighter
+                language={language}
+                style={oneDark}
+                customStyle={{
+                  margin: 0,
+                  padding: '1rem',
+                  fontSize: '0.875rem',
+                  background: '#0b0b0b',
+                }}
+              >
+                {code}
+              </SyntaxHighlighter>
+            </div>
+          )}
+          <textarea
+            className={`min-h-[160px] w-full resize-y px-4 py-3 font-mono text-xs outline-none transition-colors ${
+              shouldShowHighlight
+                ? 'bg-transparent text-transparent caret-neutral-100'
+                : 'bg-[#0b0b0b] text-neutral-100'
+            } focus-visible:ring-1 focus-visible:ring-primary/40 cursor-text`}
+            value={editableCode}
+            onChange={(event) => setEditableCode(event.target.value)}
+            onFocus={() => setIsEditing(true)}
+            onBlur={() => setIsEditing(false)}
+            aria-label="Python code editor"
+            data-testid="python-code-editor"
+            spellCheck={false}
+          />
+        </div>
       ) : (
         <SyntaxHighlighter
           language={language}
