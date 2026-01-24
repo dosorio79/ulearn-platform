@@ -214,13 +214,11 @@ describe('Home Page', () => {
       });
 
       // Find the Run button for Python code
-      const runButton = screen.getByTestId('run-button');
+      const runButton = await screen.findByTestId('run-button');
       expect(runButton).toBeInTheDocument();
 
       // Click Run button
-      await act(async () => {
-        fireEvent.click(runButton);
-      });
+      fireEvent.click(runButton);
 
       await waitFor(() => {
         expect(executionClient.executeLocally).toHaveBeenCalled();
@@ -253,7 +251,7 @@ describe('Home Page', () => {
         expect(screen.getByTestId('lesson-content')).toBeInTheDocument();
       });
 
-      const runButton = screen.getByTestId('run-button');
+      const runButton = await screen.findByTestId('run-button');
       fireEvent.click(runButton);
 
       await screen.findByTestId('execution-output-empty');
