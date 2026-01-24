@@ -195,11 +195,11 @@ describe('Home Page', () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
       vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
       vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
-      let resolveRun: (value: { output: string; error: string | null; timestamp: string }) => void = () => {};
-      const runPromise = new Promise<{ output: string; error: string | null; timestamp: string }>((resolve) => {
-        resolveRun = resolve;
+      vi.mocked(executionClient.executeLocally).mockResolvedValue({
+        output: 'Hello from Python',
+        error: null,
+        timestamp: new Date().toISOString(),
       });
-      vi.mocked(executionClient.executeLocally).mockReturnValue(runPromise);
 
       renderHome();
 
@@ -226,14 +226,6 @@ describe('Home Page', () => {
         expect(executionClient.executeLocally).toHaveBeenCalled();
       });
 
-      await act(async () => {
-        resolveRun({
-          output: 'Hello from Python',
-          error: null,
-          timestamp: new Date().toISOString(),
-        });
-      });
-
       // Verify execution output appears
       await screen.findByTestId('execution-output');
       expect(screen.getByText(/hello from python/i)).toBeInTheDocument();
@@ -243,11 +235,11 @@ describe('Home Page', () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
       vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
       vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
-      let resolveRun: (value: { output: string; error: string | null; timestamp: string }) => void = () => {};
-      const runPromise = new Promise<{ output: string; error: string | null; timestamp: string }>((resolve) => {
-        resolveRun = resolve;
+      vi.mocked(executionClient.executeLocally).mockResolvedValue({
+        output: '',
+        error: null,
+        timestamp: new Date().toISOString(),
       });
-      vi.mocked(executionClient.executeLocally).mockReturnValue(runPromise);
 
       renderHome();
 
@@ -263,14 +255,6 @@ describe('Home Page', () => {
 
       const runButton = screen.getByTestId('run-button');
       fireEvent.click(runButton);
-
-      await act(async () => {
-        resolveRun({
-          output: '',
-          error: null,
-          timestamp: new Date().toISOString(),
-        });
-      });
 
       await screen.findByTestId('execution-output-empty');
       expect(screen.getByText(/no output yet/i)).toBeInTheDocument();
