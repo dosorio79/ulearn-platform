@@ -32,9 +32,11 @@ export function ExerciseBlock({ content }: ExerciseBlockProps) {
       <div className="p-4 prose prose-sm max-w-none">
         <ReactMarkdown
           components={{
-            code({ className, children, ...props }) {
+            code({ className, children, inline, node, ...props }) {
               const match = /language-(\w+)/.exec(className || '');
-              const isInline = !match;
+              const language =
+                match?.[1] ?? (typeof node?.lang === 'string' ? node.lang : '');
+              const isInline = inline ?? !language;
               
               if (isInline) {
                 return (
@@ -47,7 +49,7 @@ export function ExerciseBlock({ content }: ExerciseBlockProps) {
               return (
                 <CodeBlock
                   code={String(children).replace(/\n$/, '')}
-                  language={match[1]}
+                  language={language}
                 />
               );
             },
