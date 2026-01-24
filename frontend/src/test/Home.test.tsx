@@ -256,7 +256,10 @@ describe('Home Page', () => {
 
       const resetButton = screen.getByTestId('reset-code');
       fireEvent.click(resetButton);
-      expect(editor).toHaveValue('print("Hello")');
+
+      fireEvent.click(editToggle);
+      const editorAfterReset = await screen.findByTestId('python-code-editor');
+      expect(editorAfterReset).toHaveValue('print("Hello")');
     });
 
     it('shows guidance when execution returns no stdout', async () => {

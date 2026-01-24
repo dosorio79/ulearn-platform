@@ -118,6 +118,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const handleResetCode = () => {
     if (!isPython) return;
     setEditableCode(code);
+    setIsEditing(false);
     setResult(null);
     setOutputCopied(false);
   };
