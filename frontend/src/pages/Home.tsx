@@ -174,13 +174,13 @@ export default function Home() {
                   <Sparkles className="h-8 w-8 text-primary" />
                 </div>
                 <h2 className="text-3xl font-serif font-semibold text-tone-primary leading-snug mb-4">
-                  Data + Python, focused.
+                  Learn something new in <span className="whitespace-nowrap">15 minutes</span>
                 </h2>
                 <p className="text-base text-tone-secondary leading-relaxed">
-                  Clear, hands-on lessons with runnable examples and takeaways.
+                  Short, focused lessons on Python and data.
                 </p>
                 <p className="text-base text-tone-secondary leading-relaxed">
-                  Each session is designed to land in <span className="whitespace-nowrap">~15 minutes</span>.
+                  Clear takeaways, runnable examples, zero doomscrolling.
                 </p>
               </div>
 
