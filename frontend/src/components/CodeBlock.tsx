@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Play, Copy, Check, Loader2 } from 'lucide-react';
+import { Play, Copy, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { executeLocally, isPyodideLoaded, preloadPyodide } from '@/api/executeLocally';
 import type { ExecutionResult } from '@/types/execution';
@@ -22,6 +22,9 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
 
   const normalizedLanguage = language.toLowerCase();
   const isPython = normalizedLanguage === 'python';
+  const [editableCode, setEditableCode] = useState(code);
+  const activeCode = isPython ? editableCode : code;
+  const hasEdits = isPython && editableCode !== code;
   const panelBorderClass = isPython ? 'border-neutral-800' : 'border-border';
   const headerClass = isPython
     ? 'bg-neutral-950 text-neutral-200 border-neutral-800'
@@ -29,8 +32,12 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const languageClass = isPython ? 'text-neutral-300' : 'text-muted-foreground';
   const labelClass = isPython ? 'text-[0.65rem] uppercase tracking-wide text-neutral-400' : '';
 
+  useEffect(() => {
+    setEditableCode(code);
+  }, [code]);
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(activeCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -64,7 +71,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
         if (runIdRef.current !== runId) return;
         setRunPhase('running');
 
-        const executionResult = await executeLocally('python', code);
+        const executionResult = await executeLocally('python', activeCode);
         if (runIdRef.current !== runId) return;
         setResult(executionResult);
       } catch (error: unknown) {
@@ -103,6 +110,13 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
     await navigator.clipboard.writeText(result.output);
     setOutputCopied(true);
     setTimeout(() => setOutputCopied(false), 2000);
+  };
+
+  const handleResetCode = () => {
+    if (!isPython) return;
+    setEditableCode(code);
+    setResult(null);
+    setOutputCopied(false);
   };
 
   const runLabel = runPhase === 'loading' ? 'Loading...' : 'Running';
@@ -156,6 +170,17 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
           {isPython && (
             <>
               <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetCode}
+                className="h-7 px-2 text-xs"
+                disabled={!hasEdits || isRunning}
+                data-testid="reset-code"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </Button>
+              <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleRun}
@@ -185,18 +210,29 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
           )}
         </div>
       </div>
-      <SyntaxHighlighter
-        language={language}
-        style={oneDark}
-        customStyle={{
-          margin: 0,
-          padding: '1rem',
-          fontSize: '0.875rem',
-          background: isPython ? '#0b0b0b' : 'hsl(var(--card))',
-        }}
-      >
-        {code}
-      </SyntaxHighlighter>
+      {isPython ? (
+        <textarea
+          className="min-h-[160px] w-full resize-y bg-[#0b0b0b] px-4 py-3 font-mono text-xs text-neutral-100 outline-none"
+          value={editableCode}
+          onChange={(event) => setEditableCode(event.target.value)}
+          aria-label="Python code editor"
+          data-testid="python-code-editor"
+          spellCheck={false}
+        />
+      ) : (
+        <SyntaxHighlighter
+          language={language}
+          style={oneDark}
+          customStyle={{
+            margin: 0,
+            padding: '1rem',
+            fontSize: '0.875rem',
+            background: 'hsl(var(--card))',
+          }}
+        >
+          {code}
+        </SyntaxHighlighter>
+      )}
       {result && (
         <div className="px-4 py-3 bg-accent border-t border-border text-sm text-accent-foreground">
           <div className="flex items-center justify-between text-xs uppercase tracking-wide text-muted-foreground">

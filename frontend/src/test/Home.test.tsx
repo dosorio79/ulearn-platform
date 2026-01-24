@@ -229,6 +229,33 @@ describe('Home Page', () => {
       expect(screen.getByText(/hello from python/i)).toBeInTheDocument();
     });
 
+    it('allows editing python code and resetting to the original snippet', async () => {
+      vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
+      vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
+
+      renderHome();
+
+      const input = screen.getByPlaceholderText(/pandas groupby/i);
+      fireEvent.change(input, { target: { value: 'test' } });
+
+      const generateButton = screen.getByRole('button', { name: /generate lesson/i });
+      fireEvent.click(generateButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('lesson-content')).toBeInTheDocument();
+      });
+
+      const editor = await screen.findByTestId('python-code-editor');
+      expect(editor).toHaveValue('print("Hello")');
+
+      fireEvent.change(editor, { target: { value: 'print("Edited")' } });
+      expect(editor).toHaveValue('print("Edited")');
+
+      const resetButton = screen.getByTestId('reset-code');
+      fireEvent.click(resetButton);
+      expect(editor).toHaveValue('print("Hello")');
+    });
+
     it('shows guidance when execution returns no stdout', async () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
       vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
