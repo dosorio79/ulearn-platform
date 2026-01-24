@@ -27,8 +27,41 @@ export function HelpDrawer({ triggerLabel = 'Help' }: HelpDrawerProps) {
           <SheetDescription>Quick guidance for getting the most out of each lesson.</SheetDescription>
         </SheetHeader>
         <ScrollArea className="mt-4 h-full pr-4">
-          <div className="prose prose-sm max-w-none text-tone-secondary">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{helpContent}</ReactMarkdown>
+          <div className="space-y-4">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => <h2 className="sr-only">{children}</h2>,
+                h2: ({ children }) => (
+                  <h2 className="pt-2 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-tone-tertiary">
+                    {children}
+                  </h2>
+                ),
+                p: ({ children }) => (
+                  <p className="text-sm leading-relaxed text-tone-secondary">{children}</p>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal space-y-2 pl-5 text-sm text-tone-secondary">{children}</ol>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc space-y-2 pl-5 text-sm text-tone-secondary">{children}</ul>
+                ),
+                li: ({ children }) => <li className="pl-1">{children}</li>,
+                a: ({ children, ...props }) => (
+                  <a className="text-primary underline-offset-4 hover:underline" {...props}>
+                    {children}
+                  </a>
+                ),
+                strong: ({ children }) => <strong className="font-semibold text-tone-primary">{children}</strong>,
+                code: ({ children }) => (
+                  <code className="rounded bg-secondary/20 px-1.5 py-0.5 font-mono text-xs text-tone-primary">
+                    {children}
+                  </code>
+                ),
+              }}
+            >
+              {helpContent}
+            </ReactMarkdown>
           </div>
           <div className="mt-6 text-sm">
             <a
