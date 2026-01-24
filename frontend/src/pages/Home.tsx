@@ -174,13 +174,13 @@ export default function Home() {
                   <Sparkles className="h-8 w-8 text-primary" />
                 </div>
                 <h2 className="text-3xl font-serif font-semibold text-tone-primary leading-snug mb-4">
-                  Learn something new in <span className="whitespace-nowrap">15 minutes</span>
+                  Data + Python, focused.
                 </h2>
                 <p className="text-base text-tone-secondary leading-relaxed">
-                  Short lessons, clear takeaways, zero doomscrolling.
+                  Clear, hands-on lessons with runnable examples and takeaways.
                 </p>
                 <p className="text-base text-tone-secondary leading-relaxed">
-                  Enter a data or Python topic. We’ll handle the thinking.
+                  Each session is designed to land in <span className="whitespace-nowrap">~15 minutes</span>.
                 </p>
               </div>
 
@@ -203,7 +203,8 @@ export default function Home() {
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          Keep it narrow for a 15-minute lesson, e.g., "pandas groupby performance".
+                          Keep it narrow for a 15-minute lesson, e.g., "pandas groupby performance" or "Python list
+                          comprehensions".
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -211,7 +212,7 @@ export default function Home() {
                   <Input
                     id="topic"
                     type="text"
-                    placeholder="e.g., pandas groupby performance"
+                    placeholder="e.g., pandas groupby performance or Python list comprehensions"
                     value={topic}
                     onChange={(e) => {
                       setTopic(e.target.value);
@@ -234,14 +235,14 @@ export default function Home() {
                       type="button"
                       onClick={() =>
                         handleQuickExample(
-                          'statistical tests comparing population means',
+                          'SQL window functions for ranking',
                           'intermediate',
                         )
                       }
                       className="rounded-full border border-border bg-background px-2 py-0.5 text-tone-secondary transition-colors hover:text-tone-primary"
                       disabled={isLoading}
                     >
-                      statistical tests comparing population means
+                      SQL window functions for ranking
                     </button>
                     <button
                       type="button"
@@ -253,11 +254,11 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleQuickExample('Supervised versus unsupervised modeling', 'beginner')}
+                      onClick={() => handleQuickExample('Python list comprehensions', 'beginner')}
                       className="rounded-full border border-border bg-background px-2 py-0.5 text-tone-secondary transition-colors hover:text-tone-primary"
                       disabled={isLoading}
                     >
-                      Supervised versus unsupervised modeling
+                      Python list comprehensions
                     </button>
                     <button
                       type="button"
