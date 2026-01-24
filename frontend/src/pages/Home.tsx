@@ -15,6 +15,7 @@ import { generateLesson, getHealth } from '@/api/lessonClient';
 import { LessonResponse } from '@/types/lesson';
 import { Logo } from '@/components/Logo';
 import { useToast } from '@/components/ui/use-toast';
+import { HelpDrawer } from '@/components/HelpDrawer';
 
 type DifficultyLevel = 'beginner' | 'intermediate';
 
@@ -141,18 +142,21 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div>
-              <Logo />
-              <p className="text-xs text-tone-tertiary">
-                The best remedy for doomscrolling
-              </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div>
+                <Logo />
+                <p className="text-xs text-tone-tertiary">
+                  The best remedy for doomscrolling
+                </p>
+              </div>
+              {isDemoMode ? (
+                <span className="rounded-full border border-border bg-secondary/40 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-tone-secondary">
+                  Demo mode – static lessons
+                </span>
+              ) : null}
             </div>
-            {isDemoMode ? (
-              <span className="rounded-full border border-border bg-secondary/40 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-tone-secondary">
-                Demo mode – static lessons
-              </span>
-            ) : null}
+            <HelpDrawer />
           </div>
         </div>
       </header>

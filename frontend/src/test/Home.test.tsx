@@ -82,6 +82,16 @@ describe('Home Page', () => {
     });
   });
 
+  it('opens the help drawer with guidance content', async () => {
+    renderHome();
+
+    const helpButton = screen.getByRole('button', { name: /help/i });
+    fireEvent.click(helpButton);
+
+    expect(await screen.findByText(/what this app is/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view full help in help\.md/i })).toBeInTheDocument();
+  });
+
   describe('Full user flow', () => {
     it('completes flow: input → generate → lesson appears', async () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
