@@ -213,6 +213,9 @@ Create your environment file from `.env-example` and update values as needed:
 
 This repository includes a **Render Blueprint–based deployment** designed for **continuous deployment of a self-contained demo**, without external dependencies (LLM APIs or MongoDB).
 
+**Live demo (auto-deploys from `main`)**  
+https://ulearn-frontend.onrender.com/
+
 ### What is deployed
 
 - **Backend (FastAPI)**  
@@ -231,7 +234,11 @@ This repository includes a **Render Blueprint–based deployment** designed for 
 - MongoDB persistence
 - Authenticated user flows
 
-These features are available locally and documented above, but excluded from the Render deployment to ensure reliability and cost-free operation.
+These features are available locally and documented above, but excluded from the Render deployment to keep the demo reliable and cost-free:
+- The full LLM flow requires a valid `OPENAI_API_KEY`.
+- The production dataset/content setup is non-trivial to provision in a public demo environment.
+
+This still demonstrates **continuous deployment**: Render auto-deploys the demo on every push to `main`.
 
 ### Deploying on Render
 
@@ -282,7 +289,7 @@ npm test
 ## CI
 
 GitHub Actions runs backend tests (with a MongoDB service) and frontend lint/test/build on every push and pull request.  
-CI validates correctness; CD is handled separately via Render Blueprint deployment for demo environments.
+CI validates correctness; CD is handled via the Render Blueprint demo deployment, which auto-deploys from `main`.
 
 ---
 
