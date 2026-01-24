@@ -245,6 +245,9 @@ describe('Home Page', () => {
         expect(screen.getByTestId('lesson-content')).toBeInTheDocument();
       });
 
+      const editToggle = await screen.findByTestId('toggle-edit');
+      fireEvent.click(editToggle);
+
       const editor = await screen.findByTestId('python-code-editor');
       expect(editor).toHaveValue('print("Hello")');
 
