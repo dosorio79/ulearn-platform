@@ -8,6 +8,9 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+### Added
+- Editable Python code blocks with per-block Reset.
+
 ### Docs
 - Added V1 goals and near-term steps documentation.
 - Captured V1 nice-to-have UX goals for exercise feedback.
