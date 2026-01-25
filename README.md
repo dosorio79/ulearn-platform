@@ -278,6 +278,20 @@ Run all tests:
 uv run pytest
 ```
 
+For reproducible local runs, sync the lockfile first:
+
+```bash
+uv sync --extra dev --frozen
+```
+
+Run integration tests only:
+
+```bash
+uv run pytest -m integration
+```
+
+Integration tests live in `tests/integration/` and focus on end-to-end workflows.
+
 Frontend tests:
 
 ```bash
@@ -285,12 +299,16 @@ cd frontend
 npm test
 ```
 
+Frontend API + test coverage:
+- Centralized API client: `frontend/src/api/lessonClient.ts`
+- Tests cover lesson rendering, API client usage, run/stop flow, and export behavior
+
 ---
 
 ## CI
 
 GitHub Actions runs backend tests (with a MongoDB service) and frontend lint/test/build on every push and pull request.  
-CI validates correctness; CD is handled via the Render Blueprint demo deployment, which auto-deploys from `main`.
+CI validates correctness; CD is handled via the Render Blueprint demo deployment, which auto-deploys from `main`. Deployment is gated by merging to `main` after CI checks pass (use branch protection with required status checks).
 
 ---
 
