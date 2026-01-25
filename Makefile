@@ -1,8 +1,8 @@
-.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration test-service test-frontend test-all frontend-build start-demo
+.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration test-service test-frontend test-all start-demo
 
 help:
 	@echo "Targets:"
-	@echo "  build           Build frontend and run containers"
+	@echo "  build           Build containers and run them"
 	@echo "  start           Start containers (no rebuild)"
 	@echo "  stop            Stop containers (keeps containers)"
 	@echo "  remove          Stop and remove containers"
@@ -17,13 +17,7 @@ help:
 	@echo "  test-all        Run backend and frontend tests"
 	@echo "  start-demo      Start demo mode backend (static lessons, in-memory telemetry)"
 
-frontend-build:
-	@if [ ! -d frontend/node_modules ]; then \
-		cd frontend && npm install; \
-	fi
-	@cd frontend && npm run build
-
-build: frontend-build
+build:
 	@docker compose up --build
 
 start:

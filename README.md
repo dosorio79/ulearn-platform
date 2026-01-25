@@ -167,8 +167,9 @@ This telemetry-first design mirrors authenticated usage patterns and allows a fu
 
 ### Quickstart
 
-make build  
-make start  
+```bash
+make build
+```
 
 Then open:
 - http://localhost:8080 — Frontend UI  
@@ -176,16 +177,19 @@ Then open:
 
 ### Start manually
 
-docker compose up --build  
+```bash
+docker compose up --build
+```
 
 This starts the backend, MongoDB, and the frontend container.
 
-Note: the frontend image expects a prebuilt `frontend/dist`.  
-Run `npm run build` in `frontend/` before building the containers.
+The frontend build runs inside the Docker image (no separate `npm run build` step required). `HELP.md` is bundled into the frontend image from the repo root (single source of truth).
 
 To call the backend directly, set:
 
+```
 API_BASE=http://localhost:8000
+```
 
 ---
 
