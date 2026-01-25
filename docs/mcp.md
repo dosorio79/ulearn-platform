@@ -44,10 +44,17 @@ Hint categories include:
 
 If `CONTEXT7_API_KEY` is set, the tool will attempt a Context7 lookup for any
 non-stdlib import (including `pandas`, `numpy`, `scipy`) and append a
-`context7_context` hint with a documentation snippet title and source.
-If no snippet is returned, a `context7_missing` hint is recorded; if the API
-returns an error, a `context7_error` hint is recorded. All outcomes remain
+summary-level `context7_reference` hint when reference documentation is found.
+If the API returns an error, a `context7_error` hint is recorded. Missing
+snippets are treated as neutral and do not generate hints. All outcomes remain
 non-blocking.
+Context7 remains an exploratory, non-authoritative signal; for short, scoped
+lessons it has not consistently produced actionable improvements, so the
+integration stays best-effort while alternative MCP-backed sources are evaluated.
+Looking ahead, the long-term goal is to route these checks through the context
+agent to help catch syntax issues, but current impact appears modest based on
+telemetry-only evaluation and strong baseline outputs. This is expected to be
+revisited with broader examples and potential Context7 alternatives.
 
 Hints are:
 - logged and stored in telemetry

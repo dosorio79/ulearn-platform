@@ -1,171 +1,94 @@
-"""MCP-style advisory hints for Python code blocks."""
+"""Shared helpers for advisory Python code hints."""
 
 from __future__ import annotations
 
 import ast
 import re
 import sys
-from typing import Any, Sequence
-
-from app.models.agents import GeneratedSection
-from app.models.api import LessonSection
+from typing import Any
 
 _PYTHON_FENCE_RE = re.compile(r"```python\s*\r?\n(.*?)```", re.DOTALL)
 
-_UNSAFE_MODULES = {
-    "os",
-    "sys",
-    "subprocess",
-    "socket",
-    "shutil",
-    "pathlib",
-}
-_UNSAFE_CALLS = {
-    "eval",
-    "exec",
-    "compile",
-    "open",
-    "__import__",
-}
-_ALLOWED_THIRD_PARTY = {"pandas", "numpy", "scipy"}
-_HEAVY_LIBS = {
-    "sklearn",
-    "torch",
-    "tensorflow",
-}
-_DEFAULT_STDLIB = {
-    "argparse",
-    "collections",
-    "datetime",
-    "functools",
-    "itertools",
-    "json",
-    "math",
-    "pathlib",
-    "random",
-    "re",
-    "statistics",
-    "string",
-    "typing",
-}
-_LINE_LENGTH_LIMIT = 100
+_ALLOWED_THIRD_PARTY = {"numpy", "pandas", "scipy"}
+_HEAVY_IMPORTS = {"sklearn", "tensorflow", "torch"}
+_UNSAFE_IMPORTS = {"os", "subprocess"}
+_UNSAFE_CALLS = {"call", "popen", "Popen", "run", "system"}
+_OUTPUT_CALLS = {"display", "print", "show"}
 
 
 def inspect_python_code(code: str) -> list[dict[str, str]]:
-    """Return advisory hints for syntax and safety issues."""
     hints: list[dict[str, str]] = []
-    seen: set[tuple[str, str]] = set()
-    stdlib_modules = getattr(sys, "stdlib_module_names", _DEFAULT_STDLIB)
+    seen_codes: set[str] = set()
 
     def add_hint(code_id: str, message: str) -> None:
-        key = (code_id, message)
-        if key in seen:
+        if code_id in seen_codes:
             return
-        seen.add(key)
+        seen_codes.add(code_id)
         hints.append({"code": code_id, "message": message})
 
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
-        location = f"line {exc.lineno}, column {exc.offset}" if exc.lineno else "unknown location"
-        add_hint("syntax_error", f"SyntaxError: {exc.msg} ({location}).")
+        add_hint("syntax_error", f"Syntax error detected: {exc.msg}.")
         return hints
 
-    saw_output = False
+    if any(len(line) > 100 for line in code.splitlines()):
+        add_hint("style_long_line", "Line exceeds 100 characters.")
+
+    imports = _collect_imports(tree)
+    stdlib_modules = getattr(sys, "stdlib_module_names", set())
+
+    third_party = {
+        module
+        for module in imports
+        if module not in stdlib_modules and module not in _ALLOWED_THIRD_PARTY
+    }
+    for module in sorted(third_party):
+        add_hint("third_party_import", f"Third-party import '{module}' may be unavailable.")
+
+    for module in sorted(imports & _HEAVY_IMPORTS):
+        add_hint("heavy_import", f"Heavy dependency '{module}' may be slow or unavailable.")
+
+    if imports & _UNSAFE_IMPORTS:
+        add_hint("unsafe_import", "Potentially unsafe module import detected.")
+
+    has_output = False
     saw_apply = False
-
+    saw_unsafe_call = False
     for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                module = alias.name.split(".")[0]
-                if module in _UNSAFE_MODULES:
-                    add_hint(
-                        "unsafe_import",
-                        f"Import of '{module}' may not be supported in the browser runtime.",
-                    )
-                if module in _ALLOWED_THIRD_PARTY:
-                    continue
-                if module in _HEAVY_LIBS:
-                    add_hint(
-                        "heavy_import",
-                        f"Import of '{module}' may be heavy for a quick demo snippet.",
-                    )
-                elif module not in stdlib_modules:
-                    add_hint(
-                        "third_party_import",
-                        f"Import of '{module}' may require extra dependencies.",
-                    )
-        elif isinstance(node, ast.ImportFrom):
-            if not node.module:
-                continue
-            module = node.module.split(".")[0]
-            if module in _UNSAFE_MODULES:
-                add_hint(
-                    "unsafe_import",
-                    f"Import from '{module}' may not be supported in the browser runtime.",
-                )
-            if module in _ALLOWED_THIRD_PARTY:
-                continue
-            if module in _HEAVY_LIBS:
-                add_hint(
-                    "heavy_import",
-                    f"Import from '{module}' may be heavy for a quick demo snippet.",
-                )
-            elif module not in stdlib_modules:
-                add_hint(
-                    "third_party_import",
-                    f"Import from '{module}' may require extra dependencies.",
-                )
-        elif isinstance(node, ast.Call):
-            func_name = _get_call_name(node.func)
-            if not func_name:
-                continue
-            if func_name in _UNSAFE_CALLS:
-                add_hint(
-                    "unsafe_call",
-                    f"Use of '{func_name}' is discouraged in lesson snippets.",
-                )
-            root = func_name.split(".")[0]
-            if root in _UNSAFE_MODULES:
-                add_hint(
-                    "unsafe_call",
-                    f"Call to '{func_name}' may not be supported in the browser runtime.",
-                )
-            if func_name == "print" or func_name.endswith(".display") or func_name == "display":
-                saw_output = True
-            if func_name.endswith(".apply"):
-                saw_apply = True
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name):
+                if func.id in _OUTPUT_CALLS:
+                    has_output = True
+                if func.id in {"eval", "exec"}:
+                    saw_unsafe_call = True
+            elif isinstance(func, ast.Attribute):
+                if func.attr in _OUTPUT_CALLS:
+                    has_output = True
+                if func.attr == "apply":
+                    saw_apply = True
+                if func.attr in _UNSAFE_CALLS:
+                    saw_unsafe_call = True
 
-    if not saw_output:
-        add_hint(
-            "no_output",
-            "Snippet does not print or display output; consider adding print(...) for clarity.",
-        )
+    if saw_unsafe_call:
+        add_hint("unsafe_call", "Potentially unsafe system call detected.")
+
     if saw_apply:
-        add_hint(
-            "pandas_apply",
-            "Using DataFrame.apply can be slow on large data; prefer vectorized operations.",
-        )
+        add_hint("pandas_apply", "Pandas apply can be slow; consider vectorized operations.")
 
-    for line in code.splitlines():
-        if len(line) > _LINE_LENGTH_LIMIT:
-            add_hint(
-                "style_long_line",
-                f"Line exceeds {_LINE_LENGTH_LIMIT} characters; consider wrapping for readability.",
-            )
-            break
+    if not has_output:
+        add_hint("no_output", "This block does not produce any output.")
 
     return hints
 
 
-
-
 def collect_hints_from_generated_sections(
-    sections: Sequence[GeneratedSection],
+    sections: list[Any],
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
-    """Collect MCP hints from generated sections."""
     hints: list[dict[str, Any]] = []
     python_blocks = 0
+
     for section in sections:
         for index, block in enumerate(section.blocks):
             if block.type != "python":
@@ -181,16 +104,15 @@ def collect_hints_from_generated_sections(
                     }
                 )
 
-    summary = _build_summary(python_blocks, hints)
-    return hints, summary
+    return hints, _rebuild_summary(hints, python_blocks)
 
 
 def collect_hints_from_markdown_sections(
-    sections: Sequence[LessonSection],
+    sections: list[Any],
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
-    """Collect MCP hints from markdown sections (static/demo mode)."""
     hints: list[dict[str, Any]] = []
     python_blocks = 0
+
     for section in sections:
         matches = list(_PYTHON_FENCE_RE.finditer(section.content_markdown))
         for index, match in enumerate(matches):
@@ -206,27 +128,28 @@ def collect_hints_from_markdown_sections(
                     }
                 )
 
-    summary = _build_summary(python_blocks, hints)
-    return hints, summary
+    return hints, _rebuild_summary(hints, python_blocks)
 
 
-def _get_call_name(node: ast.AST) -> str | None:
-    if isinstance(node, ast.Name):
-        return node.id
-    if isinstance(node, ast.Attribute):
-        base = _get_call_name(node.value)
-        if base:
-            return f"{base}.{node.attr}"
-        return node.attr
-    return None
+def _collect_imports(tree: ast.AST) -> set[str]:
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                modules.add(alias.name.split(".")[0])
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                modules.add(node.module.split(".")[0])
+    return modules
 
 
-def _build_summary(
+def _rebuild_summary(
+    hints: list[dict[str, Any]],
     python_blocks: int,
-    hints: Sequence[dict[str, Any]],
 ) -> dict[str, Any] | None:
     if python_blocks == 0:
         return None
+
     hint_count = sum(len(entry.get("hints", [])) for entry in hints)
     return {
         "python_blocks": python_blocks,
