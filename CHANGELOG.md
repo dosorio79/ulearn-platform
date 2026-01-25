@@ -24,7 +24,7 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 - Documentation clarified MCP behavior, deployment notes, and V1 goal statuses.
 
 ### Fixed
-- Frontend timeout hint test stabilization and HelpDrawer import path for CI builds.
+- Frontend timeout hint test stabilization, HelpDrawer import path for CI builds, and edit focus guard in CodeBlock.
 
 ## [0.6.0] - 2026-01-25
 
