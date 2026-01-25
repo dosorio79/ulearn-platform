@@ -126,7 +126,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const handleEditToggle = () => {
     setIsEditing((prev) => {
       const next = !prev;
-      if (next) {
+      if (next && typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => textareaRef.current?.focus());
       }
       return next;
