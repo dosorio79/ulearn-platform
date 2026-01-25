@@ -32,6 +32,14 @@ Behavior:
 - `static` mode → calls `collect_hints_from_markdown_sections`
 - Returns `(hints, summary)` with the existing hint structure
 
+Hint categories include:
+- Syntax errors and unsafe calls
+- Missing output (no `print`/`display`)
+- Suspicious third-party imports (excluding `pandas`, `numpy`, `scipy`)
+- Heavy libraries (`sklearn`, `torch`, `tensorflow`)
+- Style nits (long lines)
+- Common pandas pitfalls (e.g., `df.apply`)
+
 Hints are:
 - logged and stored in telemetry
 - never shown to users
