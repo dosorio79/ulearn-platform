@@ -21,6 +21,7 @@ MONGO_FAILURE_COLLECTION = os.getenv(
 # ---------------------------
 MODEL = os.getenv("MODEL", "gpt-4.1-mini")
 USE_LLM_CONTENT = os.getenv("USE_LLM_CONTENT", "false").lower() == "true"
+CONTEXT7_API_KEY = os.getenv("CONTEXT7_API_KEY", "")
 
 # Telemetry configuration
 TELEMETRY_BACKEND = os.getenv("TELEMETRY_BACKEND", "mongo").lower()
