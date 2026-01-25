@@ -141,8 +141,10 @@ def test_context7_hint_appended_when_enabled(monkeypatch):
 
     assert summary is not None
     assert hints
-    hint_codes = {hint["code"] for hint in hints[0]["hints"]}
-    assert "context7_context" in hint_codes
+    summary_entries = [entry for entry in hints if entry.get("section_id") is None]
+    assert summary_entries
+    hint_codes = {hint["code"] for hint in summary_entries[0]["hints"]}
+    assert "context7_reference" in hint_codes
 
 
 def test_context7_hint_added_for_allowed_third_party_import(monkeypatch):
@@ -175,8 +177,10 @@ def test_context7_hint_added_for_allowed_third_party_import(monkeypatch):
 
     assert summary is not None
     assert hints
-    hint_codes = {hint["code"] for hint in hints[0]["hints"]}
-    assert "context7_context" in hint_codes
+    summary_entries = [entry for entry in hints if entry.get("section_id") is None]
+    assert summary_entries
+    hint_codes = {hint["code"] for hint in summary_entries[0]["hints"]}
+    assert "context7_reference" in hint_codes
 
 
 def test_context7_missing_hint_when_no_snippet(monkeypatch):
@@ -203,8 +207,8 @@ def test_context7_missing_hint_when_no_snippet(monkeypatch):
         {"mode": "agentic", "sections": sections},
     )
 
-    hint_codes = {hint["code"] for hint in hints[0]["hints"]}
-    assert "context7_missing" in hint_codes
+    summary_entries = [entry for entry in hints if entry.get("section_id") is None]
+    assert not summary_entries
 
 
 def test_context7_error_hint_on_exception(monkeypatch):
@@ -231,5 +235,7 @@ def test_context7_error_hint_on_exception(monkeypatch):
         {"mode": "agentic", "sections": sections},
     )
 
-    hint_codes = {hint["code"] for hint in hints[0]["hints"]}
+    summary_entries = [entry for entry in hints if entry.get("section_id") is None]
+    assert summary_entries
+    hint_codes = {hint["code"] for hint in summary_entries[0]["hints"]}
     assert "context7_error" in hint_codes

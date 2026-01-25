@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import logging
 import re
 import sys
 from typing import Any
@@ -16,6 +17,7 @@ from app.services.mcp_hints import (
 )
 
 _PYTHON_FENCE_RE = re.compile(r"```python\s*\r?\n(.*?)```", re.DOTALL)
+logger = logging.getLogger(__name__)
 
 
 def _python_code_hints_tool(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
@@ -43,71 +45,69 @@ def _append_context7_hints(
     if not api_key:
         return
 
-    modules_by_block = _collect_third_party_modules(sections, mode)
-    if not modules_by_block:
+    libraries = _collect_third_party_libraries(sections, mode)
+    if not libraries:
         return
 
+    context_hints: list[dict[str, str]] = []
     cache: dict[str, dict[str, Any] | None] = {}
-    for key, modules in modules_by_block.items():
-        if not modules:
+    for library in sorted(libraries):
+        if library not in cache:
+            cache[library] = _fetch_context_snippet(api_key, library)
+            snippet = cache[library]
+            logger.debug(
+                "context7_query",
+                extra={"library": library, "returned": bool(snippet and not snippet.get("error"))},
+            )
+
+        snippet = cache[library]
+        if not snippet:
             continue
-        entry = _ensure_entry(hints, key)
-        context_hints = []
-        for module in modules:
-            if module not in cache:
-                cache[module] = _fetch_context_snippet(api_key, module)
-            snippet = cache[module]
-            if not snippet:
-                context_hints.append(
-                    {
-                        "code": "context7_missing",
-                        "message": f"Context7: no snippet returned for '{module}'.",
-                    }
-                )
-                continue
-            if snippet.get("error"):
-                context_hints.append(
-                    {
-                        "code": "context7_error",
-                        "message": f"Context7: error fetching '{module}': {snippet['error']}.",
-                    }
-                )
-                continue
-            title = snippet.get("title", "Context7 snippet")
-            source = snippet.get("source", "context7.com")
+        if snippet.get("error"):
             context_hints.append(
                 {
-                    "code": "context7_context",
-                    "message": f"Context7: {title} ({source}).",
+                    "code": "context7_error",
+                    "message": f"Context7: error fetching documentation for '{library}'.",
                 }
             )
-        if context_hints:
-            entry["hints"].extend(context_hints)
+            continue
+        context_hints.append(
+            {
+                "code": "context7_reference",
+                "message": f"Context7: reference documentation available for '{library}'.",
+            }
+        )
+
+    if context_hints:
+        hints.append(
+            {
+                "section_id": None,
+                "block_index": None,
+                "hints": context_hints,
+            }
+        )
 
 
-def _collect_third_party_modules(
+def _collect_third_party_libraries(
     sections: list[Any],
     mode: str,
-) -> dict[tuple[str, int], set[str]]:
-    modules_by_block: dict[tuple[str, int], set[str]] = {}
+) -> set[str]:
     stdlib_modules = getattr(sys, "stdlib_module_names", set())
+    libraries: set[str] = set()
 
     if mode == "agentic":
         for section in sections:
-            for index, block in enumerate(section.blocks):
+            for block in section.blocks:
                 if block.type != "python":
                     continue
-                modules = _extract_third_party_imports(block.content, stdlib_modules)
-                modules_by_block[(section.id, index)] = modules
+                libraries |= _extract_third_party_imports(block.content, stdlib_modules)
     else:
         for section in sections:
-            matches = list(_PYTHON_FENCE_RE.finditer(section.content_markdown))
-            for index, match in enumerate(matches):
+            for match in _PYTHON_FENCE_RE.finditer(section.content_markdown):
                 code = match.group(1).rstrip()
-                modules = _extract_third_party_imports(code, stdlib_modules)
-                modules_by_block[(section.id, index)] = modules
+                libraries |= _extract_third_party_imports(code, stdlib_modules)
 
-    return modules_by_block
+    return libraries
 
 
 def _count_python_blocks(sections: list[Any], mode: str) -> int:
@@ -142,18 +142,8 @@ def _extract_third_party_imports(code: str, stdlib_modules: set[str]) -> set[str
     return {module for module in modules if module not in stdlib_modules}
 
 
-def _ensure_entry(hints: list[dict[str, Any]], key: tuple[str, int]) -> dict[str, Any]:
-    section_id, block_index = key
-    for entry in hints:
-        if entry.get("section_id") == section_id and entry.get("block_index") == block_index:
-            return entry
-    entry = {"section_id": section_id, "block_index": block_index, "hints": []}
-    hints.append(entry)
-    return entry
-
-
 def _fetch_context_snippet(api_key: str, module: str) -> dict[str, Any] | None:
-    query = f"How to use {module} in Python with examples"
+    query = f"{module} API reference"
     try:
         snippets = fetch_context_snippets(
             api_key=api_key,
