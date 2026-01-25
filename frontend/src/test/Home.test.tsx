@@ -339,6 +339,17 @@ describe('Home Page', () => {
       vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
       vi.mocked(executionClient.executeLocally).mockReturnValue(new Promise(() => {}));
 
+      const realSetTimeout = window.setTimeout;
+      const timeoutSpy = vi
+        .spyOn(window, 'setTimeout')
+        .mockImplementation(((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+          if (timeout === 10000 && typeof handler === 'function') {
+            handler(...args);
+            return 0 as unknown as number;
+          }
+          return realSetTimeout(handler, timeout, ...args);
+        }) as typeof window.setTimeout);
+
       renderHome();
 
       const input = screen.getByPlaceholderText(/pandas groupby/i);
@@ -351,20 +362,17 @@ describe('Home Page', () => {
         expect(screen.getByTestId('lesson-content')).toBeInTheDocument();
       });
 
-      vi.useFakeTimers();
       try {
         const runButton = screen.getByTestId('run-button');
         fireEvent.click(runButton);
 
-        await act(async () => {
-          vi.advanceTimersByTime(10000);
+        await waitFor(() => {
+          expect(screen.getByTestId('execution-timeout-hint')).toBeInTheDocument();
         });
-
-        expect(screen.getByTestId('execution-timeout-hint')).toBeInTheDocument();
       } finally {
-        vi.useRealTimers();
+        timeoutSpy.mockRestore();
       }
-    });
+    }, 10000);
 
     it('does NOT show Run button for non-Python code blocks', async () => {
       const lessonWithJsCode: LessonResponse = {
