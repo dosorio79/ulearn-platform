@@ -22,6 +22,8 @@ class LessonRunModel(BaseModel):
     total_minutes: int
     objective: str
     section_ids: List[str]
+    mcp_hints: Optional[List[dict[str, Any]]] = None
+    mcp_summary: Optional[dict[str, Any]] = None
 
 
 class LessonFailureModel(BaseModel):
@@ -53,6 +55,8 @@ class LessonRun:
     total_minutes: int
     objective: str
     section_ids: List[str]
+    mcp_hints: Optional[List[dict[str, Any]]] = None
+    mcp_summary: Optional[dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Validate fields once at construction time."""
@@ -67,11 +71,13 @@ class LessonRun:
             total_minutes=self.total_minutes,
             objective=self.objective,
             section_ids=self.section_ids,
+            mcp_hints=self.mcp_hints,
+            mcp_summary=self.mcp_summary,
         )
 
     def to_mongo(self) -> dict:
         """Convert the telemetry record to a MongoDB-ready document."""
-        return {
+        doc = {
             "run_id": self.run_id,
             "session_id": self.session_id,
             "topic": self.topic,
@@ -82,6 +88,11 @@ class LessonRun:
             "objective": self.objective,
             "section_ids": self.section_ids,
         }
+        if self.mcp_hints is not None:
+            doc["mcp_hints"] = self.mcp_hints
+        if self.mcp_summary is not None:
+            doc["mcp_summary"] = self.mcp_summary
+        return doc
 
 
 @dataclass(frozen=True)
