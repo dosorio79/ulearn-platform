@@ -200,6 +200,7 @@ Create your environment file from `.env-example` and update values as needed:
 - `OPENAI_API_KEY` – required when `USE_LLM_CONTENT=true`
 - `MODEL` – LLM model name (default: `gpt-4.1-mini`)
 - `USE_LLM_CONTENT` – toggle LLM-backed content generation
+- `CONTEXT7_API_KEY` – optional; enables Context7 advisory docs hints
 - `CORS_ORIGINS` – allowed origins (default: `http://localhost:8080`)
 - `MONGO_FAILURE_COLLECTION` – MongoDB collection for failure telemetry
 - `STATIC_LESSON_MODE` – serve static lesson templates

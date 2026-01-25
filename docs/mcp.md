@@ -32,6 +32,21 @@ Behavior:
 - `static` mode → calls `collect_hints_from_markdown_sections`
 - Returns `(hints, summary)` with the existing hint structure
 
+Hint categories include:
+- Syntax errors and unsafe calls
+- Missing output (no `print`/`display`)
+- Suspicious third-party imports (excluding `pandas`, `numpy`, `scipy`)
+- Heavy libraries (`sklearn`, `torch`, `tensorflow`)
+- Style nits (long lines)
+- Common pandas pitfalls (e.g., `df.apply`)
+
+## Context7 API context hints (optional)
+
+If `CONTEXT7_API_KEY` is set, the tool will attempt a Context7 lookup for
+third-party or heavy imports and append a `context7_context` hint with a
+documentation snippet title and source. Failures or rate limits are ignored,
+and the hint flow remains non-blocking.
+
 Hints are:
 - logged and stored in telemetry
 - never shown to users
