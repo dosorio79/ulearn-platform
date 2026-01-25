@@ -142,6 +142,17 @@ Failure cases (schema validation, content validation, unexpected exceptions) are
 
 This telemetry-first design mirrors authenticated usage patterns and allows a future transition to authenticated sessions without schema changes.
 
+### Database design notes
+
+The database layer is intentionally scoped to telemetry only.
+
+Telemetry is append-only, non-blocking, and does not store user state or lesson content. Two backends are supported:
+- MongoDB for local development and inspection
+- In-memory storage for demo deployments and tests
+
+Both backends share the same logical event structure, allowing the system to run in environments with or without external dependencies. This design prioritizes reproducibility, demo reliability, and a clear separation between learning logic and persistence concerns.
+
+
 ---
 
 ## Technologies used
@@ -183,7 +194,7 @@ docker compose up --build
 
 This starts the backend, MongoDB, and the frontend container.
 
-The frontend build runs inside the Docker image (no separate `npm run build` step required). `HELP.md` is bundled into the frontend image from the repo root (single source of truth).
+The frontend is built inside the Docker image, so a single `docker compose up --build` is enough to build and run the full stack. `HELP.md` is bundled into the frontend image from the repo root (single source of truth).
 
 To call the backend directly, set:
 
