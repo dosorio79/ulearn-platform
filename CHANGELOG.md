@@ -8,6 +8,9 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+### Added
+- MCP advisory hints for Python code blocks (syntax + safety), stored in logs and telemetry only.
+
 ## [0.6.0] - 2026-01-25
 
 ### Added

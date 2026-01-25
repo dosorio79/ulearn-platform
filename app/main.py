@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import lesson
+from app.mcp import python_code_hints  # noqa: F401
 from app.core import config
 from app.core.logging import setup_logging
 

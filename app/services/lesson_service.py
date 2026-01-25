@@ -13,6 +13,7 @@ from app.models.db import LessonRun, LessonFailure
 from app.services.mongo import insert_lesson_run, insert_lesson_failure
 from app.services.static_lessons import build_static_lesson
 from app.services.markdown_renderer import render_blocks_to_markdown
+from app.agents.mcp_tools import invoke_tool
 from app.agents.planner import PlannerAgent
 from app.agents.content import ContentAgent
 from app.agents.content_llm import ContentAgentLLM
@@ -164,6 +165,49 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                 raise
 
     # ---------------------------
+    # MCP advisory hints (best-effort, non-blocking)
+    # ---------------------------
+    mcp_hints = None
+    mcp_summary = None
+    try:
+        if config.STATIC_LESSON_MODE:
+            mcp_hints, mcp_summary = invoke_tool(
+                "python_code_hints",
+                {"mode": "static", "sections": response.sections},
+            )
+        else:
+            mcp_hints, mcp_summary = invoke_tool(
+                "python_code_hints",
+                {"mode": "agentic", "sections": validated_sections},
+            )
+
+        if mcp_summary:
+            logger.info(
+                "mcp_hint_summary",
+                extra={
+                    "session_id": session_id,
+                    "python_blocks": mcp_summary["python_blocks"],
+                    "blocks_with_hints": mcp_summary["blocks_with_hints"],
+                    "total_hints": mcp_summary["total_hints"],
+                },
+            )
+        if mcp_hints:
+            for entry in mcp_hints:
+                for hint in entry.get("hints", []):
+                    logger.info(
+                        "mcp_hint",
+                        extra={
+                            "session_id": session_id,
+                            "section_id": entry.get("section_id"),
+                            "block_index": entry.get("block_index"),
+                            "hint_code": hint.get("code"),
+                            "hint_message": hint.get("message"),
+                        },
+                    )
+    except Exception as exc:
+        logger.warning("MCP hint collection failed session_id=%s", session_id, exc_info=exc)
+
+    # ---------------------------
     # Telemetry (best-effort)
     # ---------------------------
     telemetry = LessonRun(
@@ -176,6 +220,8 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         total_minutes=response.total_minutes,
         objective=response.objective,
         section_ids=[s.id for s in response.sections],
+        mcp_hints=mcp_hints,
+        mcp_summary=mcp_summary,
     )
 
     try:

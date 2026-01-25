@@ -67,6 +67,34 @@ def test_generate_lesson_static_mode_uses_template(monkeypatch):
     assert mongo.get_memory_runs()
 
 
+def test_generate_lesson_static_mode_invokes_mcp_tool(monkeypatch):
+    from app.services.static_lessons import build_static_lesson
+
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", True)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+
+    calls: list[dict[str, object]] = []
+
+    def fake_invoke_tool(name: str, payload: dict[str, object]):
+        calls.append({"name": name, "payload": payload})
+        return [], None
+
+    monkeypatch.setattr(lesson_service, "invoke_tool", fake_invoke_tool)
+
+    request = LessonRequest(
+        topic="Pandas groupby performance",
+        level="intermediate",
+    )
+
+    response = asyncio.run(generate_lesson(request))
+    expected = build_static_lesson(request.topic, request.level)
+
+    assert calls
+    assert calls[0]["name"] == "python_code_hints"
+    assert response.model_dump() == expected.model_dump()
+
+
 def test_static_lesson_includes_level_guidance():
     from app.services.static_lessons import build_static_lesson
 
