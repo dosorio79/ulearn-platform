@@ -28,6 +28,18 @@ Location: project root
 uv run pytest
 ```
 
+If you want reproducible dependencies for local runs, sync with the lockfile first:
+
+```bash
+uv sync --extra dev --frozen
+```
+
+Integration tests live in `tests/integration/` and run with the `integration` marker:
+
+```bash
+uv run pytest -m integration
+```
+
 If you see cache permission errors, you can run with a project-local cache:
 
 ```bash
