@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
-import helpContent from '../../../HELP.md?raw';
-import helpUrl from '../../../HELP.md?url';
+import helpContent from '../../HELP.md?raw';
+import helpUrl from '../../HELP.md?url';
 
 interface HelpDrawerProps {
   triggerLabel?: string;
