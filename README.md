@@ -103,7 +103,7 @@ AI-assisted development constraints are defined in `AGENTS.md`.
 
 The V1 focus is on tool-augmented validation and learning-quality telemetry:
 
-- MCP-backed content validation (tools arbitrate correctness)
+- MCP-backed content validation (tools provide advisory signals)
 - Explicit content contracts (schema + semantic constraints)
 - First-class telemetry for learning quality, not just errors
 - Deterministic lesson rebuilds for testing/review

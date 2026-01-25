@@ -2,7 +2,7 @@
 
 ## Scope
 
-MCP is used as an internal tool boundary to run advisory checks without changing lesson validation or output. There are no external services, servers, or network calls. MCP usage is deterministic, non-blocking, and logged for telemetry analysis only.
+MCP is used as an internal tool boundary to run advisory checks without changing lesson validation or output. External services are not required; optional signals like Context7 are best-effort and only used when configured. MCP usage is deterministic, non-blocking, and logged for telemetry analysis only.
 
 MCP flow (advisory only):
 Content generation
