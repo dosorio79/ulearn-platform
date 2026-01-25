@@ -31,7 +31,7 @@ The system:
 - Logs each lesson generation run for telemetry purposes
 
 The system is stateless from a user perspective; persistence is limited to append-only telemetry logging.
-MCP is used as an internal tool boundary to run advisory Python code checks after lesson generation; hints are non-blocking and stored in logs/telemetry without affecting validation or output. See `docs/mcp.md`.
+MCP is used as an internal tool boundary to run advisory Python code checks after lesson generation; hints are non-blocking and stored in logs/telemetry without affecting validation or output. The optional Context7 signal is best-effort and non-authoritative because short, focused lessons have not consistently benefited from it; alternative MCP-backed knowledge sources are being explored. Longer term, these checks are intended to route through the context agent to help catch syntax issues, but current impact appears modest based on telemetry-only evaluation and strong baseline outputs. See `docs/mcp.md`.
 
 ---
 
@@ -200,7 +200,7 @@ Create your environment file from `.env-example` and update values as needed:
 - `OPENAI_API_KEY` – required when `USE_LLM_CONTENT=true`
 - `MODEL` – LLM model name (default: `gpt-4.1-mini`)
 - `USE_LLM_CONTENT` – toggle LLM-backed content generation
-- `CONTEXT7_API_KEY` – optional; enables Context7 advisory docs hints (including missing/error visibility)
+- `CONTEXT7_API_KEY` – optional; enables best-effort Context7 advisory docs hints
 - `CORS_ORIGINS` – allowed origins (default: `http://localhost:8080`)
 - `MONGO_FAILURE_COLLECTION` – MongoDB collection for failure telemetry
 - `STATIC_LESSON_MODE` – serve static lesson templates
