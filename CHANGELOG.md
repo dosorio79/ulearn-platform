@@ -9,9 +9,22 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 ## [Unreleased]
 
 ### Added
-- MCP advisory hints for Python code blocks (syntax + safety), stored in logs and telemetry only.
-- Optional Context7 API context hints for third-party imports.
-- Context7 visibility hints for missing snippets or API errors.
+- None.
+
+## [0.6.5] - 2026-01-25
+
+### Added
+- MCP advisory Python hints with optional Context7 reference lookups, recorded in telemetry only.
+- Integration test layer for `/lesson` workflows (`tests/integration/`).
+- Frontend Docker build stage to produce the UI inside the container, bundling `HELP.md`.
+
+### Changed
+- README now reflects one-command Docker build/run and expanded testing guidance.
+- Makefile `build` target uses Docker only (no separate frontend build step).
+- Documentation clarified MCP behavior, deployment notes, and V1 goal statuses.
+
+### Fixed
+- Frontend timeout hint test stabilization and HelpDrawer import path for CI builds.
 
 ## [0.6.0] - 2026-01-25
 
