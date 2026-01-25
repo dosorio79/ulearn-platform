@@ -58,6 +58,20 @@ def _append_context7_hints(
                 cache[module] = _fetch_context_snippet(api_key, module)
             snippet = cache[module]
             if not snippet:
+                context_hints.append(
+                    {
+                        "code": "context7_missing",
+                        "message": f"Context7: no snippet returned for '{module}'.",
+                    }
+                )
+                continue
+            if snippet.get("error"):
+                context_hints.append(
+                    {
+                        "code": "context7_error",
+                        "message": f"Context7: error fetching '{module}': {snippet['error']}.",
+                    }
+                )
                 continue
             title = snippet.get("title", "Context7 snippet")
             source = snippet.get("source", "context7.com")
@@ -139,15 +153,15 @@ def _ensure_entry(hints: list[dict[str, Any]], key: tuple[str, int]) -> dict[str
 
 
 def _fetch_context_snippet(api_key: str, module: str) -> dict[str, Any] | None:
-    query = f"How to use {module} in Python"
+    query = f"How to use {module} in Python with examples"
     try:
         snippets = fetch_context_snippets(
             api_key=api_key,
             library_name=module,
             query=query,
         )
-    except Exception:
-        return None
+    except Exception as exc:
+        return {"error": str(exc)}
     if not snippets:
         return None
     return snippets[0]
