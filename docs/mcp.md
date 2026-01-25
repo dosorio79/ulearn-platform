@@ -40,6 +40,13 @@ Hint categories include:
 - Style nits (long lines)
 - Common pandas pitfalls (e.g., `df.apply`)
 
+## Context7 API context hints (optional)
+
+If `CONTEXT7_API_KEY` is set, the tool will attempt a Context7 lookup for
+third-party or heavy imports and append a `context7_context` hint with a
+documentation snippet title and source. Failures or rate limits are ignored,
+and the hint flow remains non-blocking.
+
 Hints are:
 - logged and stored in telemetry
 - never shown to users
