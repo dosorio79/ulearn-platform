@@ -14,6 +14,7 @@ from app.core import config
 from app.services import lesson_service
 from app.services import mongo
 from app.services.lesson_service import generate_lesson
+from app.mcp import python_code_hints  # noqa: F401
 
 pytestmark = pytest.mark.unit
 
@@ -93,6 +94,25 @@ def test_generate_lesson_static_mode_invokes_mcp_tool(monkeypatch):
     assert calls
     assert calls[0]["name"] == "python_code_hints"
     assert response.model_dump() == expected.model_dump()
+
+
+@pytest.mark.parametrize("static_mode", [True, False])
+def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", static_mode)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+
+    request = LessonRequest(
+        topic="Pandas groupby performance",
+        level="beginner",
+    )
+
+    response = asyncio.run(generate_lesson(request))
+
+    assert response.sections
+    runs = mongo.get_memory_runs()
+    assert runs
+    assert "mcp_summary" in runs[-1]
 
 
 def test_static_lesson_includes_level_guidance():

@@ -4,6 +4,17 @@
 
 MCP is used as an internal tool boundary to run advisory checks without changing lesson validation or output. There are no external services, servers, or network calls. MCP usage is deterministic, non-blocking, and logged for telemetry analysis only.
 
+MCP flow (advisory only):
+Content generation
+     ↓
+Validation
+     ↓
+MCP tool (advisory)
+     ↓
+Telemetry logging
+
+MCP is advisory and non-blocking, does not affect lesson output or validation, and any external signals (e.g. Context7) are best-effort and non-authoritative.
+
 ## Tool registry
 
 The registry lives in `app/agents/mcp_tools.py` and provides:

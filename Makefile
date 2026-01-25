@@ -1,4 +1,4 @@
-.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration test-frontend test-all frontend-build start-demo
+.PHONY: help build start stop remove logs test test-unit test-api test-content-parse test-integration test-service test-frontend test-all frontend-build start-demo
 
 help:
 	@echo "Targets:"
@@ -12,6 +12,7 @@ help:
 	@echo "  test-api        Run API tests"
 	@echo "  test-content-parse Run content parsing tests"
 	@echo "  test-integration Run integration tests"
+	@echo "  test-service     Run service orchestration tests"
 	@echo "  test-frontend   Run frontend tests"
 	@echo "  test-all        Run backend and frontend tests"
 	@echo "  start-demo      Start demo mode backend (static lessons, in-memory telemetry)"
@@ -56,6 +57,10 @@ test-content-parse:
 test-integration:
 	@uv sync --extra dev
 	@uv run pytest -m integration
+
+test-service:
+	@uv sync --extra dev
+	@uv run pytest tests/test_service.py
 
 test-frontend:
 	@cd frontend && npm test
