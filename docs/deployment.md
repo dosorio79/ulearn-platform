@@ -105,6 +105,8 @@ This repo includes a Render blueprint (`render.yaml`) that runs a static lesson 
 Live demo (auto-deploys from `main`):
 - https://ulearn-frontend.onrender.com/
 
+MCP runs locally and in CI as part of backend execution; in the public demo, external MCP signals (e.g. Context7) are disabled or optional by configuration. No code changes are required to keep MCP behavior consistent across environments.
+
 What it does:
 - backend runs with `DEMO_MODE=true` (static lessons + memory telemetry)
 - frontend builds a static Vite app and injects `API_BASE` into `frontend/public/runtime-config.js`

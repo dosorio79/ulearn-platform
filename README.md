@@ -31,7 +31,7 @@ The system:
 - Logs each lesson generation run for telemetry purposes
 
 The system is stateless from a user perspective; persistence is limited to append-only telemetry logging.
-MCP is used as an internal tool boundary to run advisory Python code checks after lesson generation; hints are non-blocking and stored in logs/telemetry without affecting validation or output. The optional Context7 signal is best-effort and non-authoritative because short, focused lessons have not consistently benefited from it; alternative MCP-backed knowledge sources are being explored. Longer term, these checks are intended to route through the context agent to help catch syntax issues, but current impact appears modest based on telemetry-only evaluation and strong baseline outputs. See `docs/mcp.md`.
+MCP is used as an internal tool boundary to run advisory Python code checks after lesson generation. Hints are non-blocking and stored in logs/telemetry without affecting validation or output. MCP tools run internally, remain advisory, and are evaluated via telemetry. The optional Context7 signal is best-effort and non-authoritative because short, focused lessons have not consistently benefited from it; alternative MCP-backed knowledge sources are being explored. Longer term, these checks are intended to route through the context agent to help catch syntax issues, but current impact appears modest based on telemetry-only evaluation and strong baseline outputs. See `docs/mcp.md`.
 
 ---
 
