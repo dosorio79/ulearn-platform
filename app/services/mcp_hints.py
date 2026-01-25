@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import re
+import sys
 from typing import Any, Sequence
 
 from app.models.agents import GeneratedSection
@@ -26,12 +27,35 @@ _UNSAFE_CALLS = {
     "open",
     "__import__",
 }
+_ALLOWED_THIRD_PARTY = {"pandas", "numpy", "scipy"}
+_HEAVY_LIBS = {
+    "sklearn",
+    "torch",
+    "tensorflow",
+}
+_DEFAULT_STDLIB = {
+    "argparse",
+    "collections",
+    "datetime",
+    "functools",
+    "itertools",
+    "json",
+    "math",
+    "pathlib",
+    "random",
+    "re",
+    "statistics",
+    "string",
+    "typing",
+}
+_LINE_LENGTH_LIMIT = 100
 
 
 def inspect_python_code(code: str) -> list[dict[str, str]]:
     """Return advisory hints for syntax and safety issues."""
     hints: list[dict[str, str]] = []
     seen: set[tuple[str, str]] = set()
+    stdlib_modules = getattr(sys, "stdlib_module_names", _DEFAULT_STDLIB)
 
     def add_hint(code_id: str, message: str) -> None:
         key = (code_id, message)
@@ -47,6 +71,9 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
         add_hint("syntax_error", f"SyntaxError: {exc.msg} ({location}).")
         return hints
 
+    saw_output = False
+    saw_apply = False
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -56,6 +83,18 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
                         "unsafe_import",
                         f"Import of '{module}' may not be supported in the browser runtime.",
                     )
+                if module in _ALLOWED_THIRD_PARTY:
+                    continue
+                if module in _HEAVY_LIBS:
+                    add_hint(
+                        "heavy_import",
+                        f"Import of '{module}' may be heavy for a quick demo snippet.",
+                    )
+                elif module not in stdlib_modules:
+                    add_hint(
+                        "third_party_import",
+                        f"Import of '{module}' may require extra dependencies.",
+                    )
         elif isinstance(node, ast.ImportFrom):
             if not node.module:
                 continue
@@ -64,6 +103,18 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
                 add_hint(
                     "unsafe_import",
                     f"Import from '{module}' may not be supported in the browser runtime.",
+                )
+            if module in _ALLOWED_THIRD_PARTY:
+                continue
+            if module in _HEAVY_LIBS:
+                add_hint(
+                    "heavy_import",
+                    f"Import from '{module}' may be heavy for a quick demo snippet.",
+                )
+            elif module not in stdlib_modules:
+                add_hint(
+                    "third_party_import",
+                    f"Import from '{module}' may require extra dependencies.",
                 )
         elif isinstance(node, ast.Call):
             func_name = _get_call_name(node.func)
@@ -80,6 +131,29 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
                     "unsafe_call",
                     f"Call to '{func_name}' may not be supported in the browser runtime.",
                 )
+            if func_name == "print" or func_name.endswith(".display") or func_name == "display":
+                saw_output = True
+            if func_name.endswith(".apply"):
+                saw_apply = True
+
+    if not saw_output:
+        add_hint(
+            "no_output",
+            "Snippet does not print or display output; consider adding print(...) for clarity.",
+        )
+    if saw_apply:
+        add_hint(
+            "pandas_apply",
+            "Using DataFrame.apply can be slow on large data; prefer vectorized operations.",
+        )
+
+    for line in code.splitlines():
+        if len(line) > _LINE_LENGTH_LIMIT:
+            add_hint(
+                "style_long_line",
+                f"Line exceeds {_LINE_LENGTH_LIMIT} characters; consider wrapping for readability.",
+            )
+            break
 
     return hints
 

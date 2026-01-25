@@ -19,6 +19,7 @@ def test_inspect_python_code_flags_unsafe_import_and_call():
     codes = {hint["code"] for hint in hints}
     assert "unsafe_import" in codes
     assert "unsafe_call" in codes
+    assert "no_output" in codes
 
 
 def test_collect_hints_from_generated_sections_summary():
@@ -76,3 +77,33 @@ def test_collect_hints_does_not_mutate_blocks():
     _ = collect_hints_from_generated_sections([section])
 
     assert section.blocks[0].content == "print('ok')\n"
+
+
+def test_inspect_python_code_flags_no_output():
+    hints = inspect_python_code("x = 1\n")
+    codes = {hint["code"] for hint in hints}
+    assert "no_output" in codes
+
+
+def test_inspect_python_code_flags_long_line():
+    hints = inspect_python_code("x = '" + ("a" * 120) + "'\n")
+    codes = {hint["code"] for hint in hints}
+    assert "style_long_line" in codes
+
+
+def test_inspect_python_code_flags_pandas_apply():
+    hints = inspect_python_code("df.apply(lambda x: x)\n")
+    codes = {hint["code"] for hint in hints}
+    assert "pandas_apply" in codes
+
+
+def test_inspect_python_code_flags_third_party_import():
+    hints = inspect_python_code("import requests\n")
+    codes = {hint["code"] for hint in hints}
+    assert "third_party_import" in codes
+
+
+def test_inspect_python_code_flags_heavy_import():
+    hints = inspect_python_code("import tensorflow\n")
+    codes = {hint["code"] for hint in hints}
+    assert "heavy_import" in codes
