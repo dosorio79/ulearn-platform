@@ -42,10 +42,10 @@ Hint categories include:
 
 ## Context7 API context hints (optional)
 
-If `CONTEXT7_API_KEY` is set, the tool will attempt a Context7 lookup for
-third-party or heavy imports and append a `context7_context` hint with a
-documentation snippet title and source. Failures or rate limits are ignored,
-and the hint flow remains non-blocking.
+If `CONTEXT7_API_KEY` is set, the tool will attempt a Context7 lookup for any
+non-stdlib import (including `pandas`, `numpy`, `scipy`) and append a
+`context7_context` hint with a documentation snippet title and source.
+Failures or rate limits are ignored, and the hint flow remains non-blocking.
 
 Hints are:
 - logged and stored in telemetry

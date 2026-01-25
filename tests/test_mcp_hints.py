@@ -143,3 +143,37 @@ def test_context7_hint_appended_when_enabled(monkeypatch):
     assert hints
     hint_codes = {hint["code"] for hint in hints[0]["hints"]}
     assert "context7_context" in hint_codes
+
+
+def test_context7_hint_added_for_allowed_third_party_import(monkeypatch):
+    monkeypatch.setattr(config, "CONTEXT7_API_KEY", "ctx7sk-test")
+
+    def fake_fetch_context_snippets(*, api_key, library_name, query):
+        assert api_key == "ctx7sk-test"
+        assert library_name == "pandas"
+        return [
+            {"title": "Pandas Basics", "content": "Use DataFrame", "source": "pandas.pydata.org"}
+        ]
+
+    monkeypatch.setattr(python_code_hints, "fetch_context_snippets", fake_fetch_context_snippets)
+
+    sections = [
+        GeneratedSection(
+            id="example",
+            title="Example",
+            minutes=5,
+            blocks=[
+                ContentBlock(type="python", content="import pandas as pd\nprint('ok')\n"),
+            ],
+        )
+    ]
+
+    hints, summary = invoke_tool(
+        "python_code_hints",
+        {"mode": "agentic", "sections": sections},
+    )
+
+    assert summary is not None
+    assert hints
+    hint_codes = {hint["code"] for hint in hints[0]["hints"]}
+    assert "context7_context" in hint_codes
