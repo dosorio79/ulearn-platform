@@ -31,6 +31,7 @@ The system:
 - Logs each lesson generation run for telemetry purposes
 
 The system is stateless from a user perspective; persistence is limited to append-only telemetry logging.
+MCP is used as an internal tool boundary to run advisory Python code checks after lesson generation; hints are non-blocking and stored in logs/telemetry without affecting validation or output. See `docs/mcp.md`.
 
 ---
 
@@ -63,8 +64,8 @@ FastAPI Backend
 Lesson generation is implemented using multiple cooperating agents:
 
 - **PlannerAgent** – defines lesson structure and time budget
-- **ContentAgent** – generates structured content blocks (stub implementation)
-- **ContentAgentLLM** – optional LLM-backed content generator
+- **ContentAgentLLM** – primary LLM-backed content generator
+- **ContentAgent** – stub fallback generator (optional)
 - **ValidatorAgent** – enforces structure (required sections, block formatting) and normalizes section minutes to a 15-minute total
 
 Only the content generation step uses an LLM; planning and validation are deterministic and fully testable.
