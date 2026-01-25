@@ -23,13 +23,13 @@ Environment configuration:
 
 ## Python execution (Pyodide)
 
-Python code blocks include a Run button that executes the snippet in the browser using Pyodide. The UI shows stdout output or provides a hint if no output is produced.
+Python code blocks include a Run button that executes the snippet in the browser using Pyodide. The UI shows stdout output or provides a hint if no output is produced. Python blocks are read-only by default; use Edit for quick fixes and Reset to restore the original snippet. Edits are local and do not affect exports.
 
 Set `VITE_PYODIDE_BASE` to override the default Pyodide CDN base URL (defaults to the jsDelivr CDN).
 
-## Mocked API
+## API client (tests mock)
 
-The client generates a realistic lesson response for testing. Components must consume the client and should not call the backend directly.
+The production app calls the backend via `src/api/lessonClient.ts`. Frontend tests mock this client to return realistic lesson responses; components should always consume the client and never call the backend directly.
 
 ## Local development
 
@@ -47,6 +47,8 @@ UI notes:
 - Exercise blocks render from `:::exercise` fences (`:::exercise` + content + `:::`).
 - The loading bar shows elapsed seconds and the UI surfaces errors via a toast.
 - Sections include chip headers with copy actions; full lesson export is available (Markdown + notebook).
+- Python code blocks include Edit/Reset controls for local tweaks.
+- A Help drawer in the header links to `HELP.md`.
 
 Set `VITE_API_BASE` in `frontend/.env` to change the backend URL (defaults to `http://localhost:8000`).
 The runtime config (`frontend/public/runtime-config.js`) can override this without a rebuild:

@@ -8,6 +8,25 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-01-25
+
+### Added
+- Editable Python code blocks with per-block Reset.
+
+### Changed
+- CI runs backend/frontend tests via Makefile targets.
+- Hardened frontend execution-output tests to reduce flakiness.
+- Added prompt-level assertion for audience level in LLM unit tests.
+
+### Fixed
+- Rendered runnable Python code blocks even when markdown fences omit class names.
+
+### Docs
+- Added V1 goals and near-term steps documentation.
+- Captured V1 nice-to-have UX goals for exercise feedback.
+- Documented LLM retry behavior in API usage docs.
+- Clarified Render demo deployment, live URL, and CD scope.
+
 ## [0.5.0] - 2026-01-23
 
 ### Added
@@ -19,6 +38,7 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 - Stabilized frontend Run/Stop test by waiting for the stop button state.
 - Retried LLM lesson generation once on schema or content validation failures.
 - Recorded attempt counts in lesson telemetry.
+- Added level-specific guidance to the LLM content prompt.
 - Added level-specific guidance text to static lesson templates.
 - Adjusted planner minute split for intermediate lessons.
 

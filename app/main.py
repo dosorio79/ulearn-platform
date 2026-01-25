@@ -14,7 +14,7 @@ setup_logging()
 
 app = FastAPI(
     title="uLearn API",
-    version="0.4.0",
+    version="0.6.0",
     description="Backend API for the uLearn micro-learning platform",
 )
 

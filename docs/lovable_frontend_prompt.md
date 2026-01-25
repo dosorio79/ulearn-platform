@@ -1,6 +1,8 @@
 Project name: uLearn
 Tagline: Micro-learning, generated on demand
 
+Note: This is the original mocked-API build prompt; the current frontend calls the real backend API.
+
 Build a modern, clean React frontend for uLearn, a micro-learning platform that generates focused 15-minute lessons on demand using AI.
 
 Note: This prompt reflects the original mocked-API build; the current frontend calls the backend directly.

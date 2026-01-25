@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Play, Copy, Check, Loader2 } from 'lucide-react';
+import { Play, Copy, Check, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { executeLocally, isPyodideLoaded, preloadPyodide } from '@/api/executeLocally';
 import type { ExecutionResult } from '@/types/execution';
@@ -17,11 +17,17 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [runPhase, setRunPhase] = useState<'idle' | 'loading' | 'running'>('idle');
   const [outputCopied, setOutputCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const runIdRef = useRef(0);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const EXECUTION_TIMEOUT_MS = 10000;
 
   const normalizedLanguage = language.toLowerCase();
   const isPython = normalizedLanguage === 'python';
+  const [editableCode, setEditableCode] = useState(code);
+  const activeCode = isPython ? editableCode : code;
+  const hasEdits = isPython && editableCode !== code;
+  const displayedCode = isPython ? activeCode : code;
   const panelBorderClass = isPython ? 'border-neutral-800' : 'border-border';
   const headerClass = isPython
     ? 'bg-neutral-950 text-neutral-200 border-neutral-800'
@@ -29,8 +35,12 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const languageClass = isPython ? 'text-neutral-300' : 'text-muted-foreground';
   const labelClass = isPython ? 'text-[0.65rem] uppercase tracking-wide text-neutral-400' : '';
 
+  useEffect(() => {
+    setEditableCode(code);
+  }, [code]);
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(activeCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -64,7 +74,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
         if (runIdRef.current !== runId) return;
         setRunPhase('running');
 
-        const executionResult = await executeLocally('python', code);
+        const executionResult = await executeLocally('python', activeCode);
         if (runIdRef.current !== runId) return;
         setResult(executionResult);
       } catch (error: unknown) {
@@ -105,6 +115,24 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
     setTimeout(() => setOutputCopied(false), 2000);
   };
 
+  const handleResetCode = () => {
+    if (!isPython) return;
+    setEditableCode(code);
+    setIsEditing(false);
+    setResult(null);
+    setOutputCopied(false);
+  };
+
+  const handleEditToggle = () => {
+    setIsEditing((prev) => {
+      const next = !prev;
+      if (next) {
+        requestAnimationFrame(() => textareaRef.current?.focus());
+      }
+      return next;
+    });
+  };
+
   const runLabel = runPhase === 'loading' ? 'Loading...' : 'Running';
   const errorHint = result?.error
     ? (() => {
@@ -134,7 +162,12 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
         {isPython ? (
           <div className="flex flex-col leading-tight">
             <span className={labelClass}>Runnable example</span>
-            <span className={`text-sm font-mono ${languageClass}`}>{language}</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-mono ${languageClass}`}>{language}</span>
+              <span className="rounded-full border border-neutral-800 bg-neutral-900 px-2 py-0.5 text-[0.55rem] uppercase tracking-wide text-neutral-400">
+                Editable
+              </span>
+            </div>
           </div>
         ) : (
           <span className={`text-sm font-mono ${languageClass}`}>{language}</span>
@@ -155,6 +188,27 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
           </Button>
           {isPython && (
             <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleEditToggle}
+                className="h-7 px-2 text-xs"
+                disabled={isRunning}
+                data-testid="toggle-edit"
+              >
+                {isEditing ? 'Done' : 'Edit'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetCode}
+                className="h-7 px-2 text-xs"
+                disabled={!hasEdits || isRunning}
+                data-testid="reset-code"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
@@ -185,18 +239,46 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
           )}
         </div>
       </div>
-      <SyntaxHighlighter
-        language={language}
-        style={oneDark}
-        customStyle={{
-          margin: 0,
-          padding: '1rem',
-          fontSize: '0.875rem',
-          background: isPython ? '#0b0b0b' : 'hsl(var(--card))',
-        }}
-      >
-        {code}
-      </SyntaxHighlighter>
+      {isPython ? (
+        isEditing ? (
+          <textarea
+            ref={textareaRef}
+            className="min-h-[160px] w-full resize-y bg-[#0b0b0b] px-4 py-3 font-mono text-xs text-neutral-100 outline-none focus-visible:ring-1 focus-visible:ring-primary/40 cursor-text"
+            value={editableCode}
+            onChange={(event) => setEditableCode(event.target.value)}
+            onFocus={() => setIsEditing(true)}
+            aria-label="Python code editor"
+            data-testid="python-code-editor"
+            spellCheck={false}
+          />
+        ) : (
+          <SyntaxHighlighter
+            language={language}
+            style={oneDark}
+            customStyle={{
+              margin: 0,
+              padding: '1rem',
+              fontSize: '0.875rem',
+              background: '#0b0b0b',
+            }}
+          >
+            {displayedCode}
+          </SyntaxHighlighter>
+        )
+      ) : (
+        <SyntaxHighlighter
+          language={language}
+          style={oneDark}
+          customStyle={{
+            margin: 0,
+            padding: '1rem',
+            fontSize: '0.875rem',
+            background: 'hsl(var(--card))',
+          }}
+        >
+          {displayedCode}
+        </SyntaxHighlighter>
+      )}
       {result && (
         <div className="px-4 py-3 bg-accent border-t border-border text-sm text-accent-foreground">
           <div className="flex items-center justify-between text-xs uppercase tracking-wide text-muted-foreground">

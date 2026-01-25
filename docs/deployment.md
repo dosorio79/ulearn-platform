@@ -102,9 +102,13 @@ make start
 
 This repo includes a Render blueprint (`render.yaml`) that runs a static lesson demo with in-memory telemetry.
 
+Live demo (auto-deploys from `main`):
+- https://ulearn-frontend.onrender.com/
+
 What it does:
 - backend runs with `DEMO_MODE=true` (static lessons + memory telemetry)
 - frontend builds a static Vite app and injects `API_BASE` into `frontend/public/runtime-config.js`
+- LLM-backed content is disabled and MongoDB is excluded to keep the demo cost-free and reliable
 
 To use it:
 1) Update `render.yaml` with the backend URL you want (`API_BASE`).

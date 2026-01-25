@@ -8,6 +8,10 @@ This document describes how to interact with the uLearn API. The single source o
 
 - Local development: `http://localhost:8000`
 
+## OpenAPI versioning note
+
+`openapi.yaml` is the source of truth for the API contract. Its `info.version` reflects the contract version and may not match the app release version.
+
 ## Endpoints
 
 ### POST /lesson
@@ -79,6 +83,7 @@ Expected response: `200 OK`
 - `500` for generation errors.
 
 Backend failures are logged to MongoDB failure telemetry for troubleshooting.
+When `USE_LLM_CONTENT=true`, the backend will retry once if the model output fails schema or content validation.
 
 ## Frontend note
 

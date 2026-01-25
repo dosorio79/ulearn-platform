@@ -82,6 +82,16 @@ describe('Home Page', () => {
     });
   });
 
+  it('opens the help drawer with guidance content', async () => {
+    renderHome();
+
+    const helpButton = screen.getByRole('button', { name: /help/i });
+    fireEvent.click(helpButton);
+
+    expect(await screen.findByText(/what this app is/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view full help in help\.md/i })).toBeInTheDocument();
+  });
+
   describe('Full user flow', () => {
     it('completes flow: input → generate → lesson appears', async () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
@@ -185,11 +195,11 @@ describe('Home Page', () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
       vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
       vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
-      let resolveRun: (value: { output: string; error: string | null; timestamp: string }) => void = () => {};
-      const runPromise = new Promise<{ output: string; error: string | null; timestamp: string }>((resolve) => {
-        resolveRun = resolve;
+      vi.mocked(executionClient.executeLocally).mockResolvedValue({
+        output: 'Hello from Python',
+        error: null,
+        timestamp: new Date().toISOString(),
       });
-      vi.mocked(executionClient.executeLocally).mockReturnValue(runPromise);
 
       renderHome();
 
@@ -204,7 +214,7 @@ describe('Home Page', () => {
       });
 
       // Find the Run button for Python code
-      const runButton = screen.getByTestId('run-button');
+      const runButton = await screen.findByTestId('run-button');
       expect(runButton).toBeInTheDocument();
 
       // Click Run button
@@ -214,30 +224,14 @@ describe('Home Page', () => {
         expect(executionClient.executeLocally).toHaveBeenCalled();
       });
 
-      await act(async () => {
-        resolveRun({
-          output: 'Hello from Python',
-          error: null,
-          timestamp: new Date().toISOString(),
-        });
-      });
-
       // Verify execution output appears
-      await waitFor(() => {
-        expect(screen.getByTestId('execution-output')).toBeInTheDocument();
-      });
+      await screen.findByTestId('execution-output');
       expect(screen.getByText(/hello from python/i)).toBeInTheDocument();
     });
 
-    it('shows guidance when execution returns no stdout', async () => {
+    it('allows editing python code and resetting to the original snippet', async () => {
       vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
       vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
-      vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
-      let resolveRun: (value: { output: string; error: string | null; timestamp: string }) => void = () => {};
-      const runPromise = new Promise<{ output: string; error: string | null; timestamp: string }>((resolve) => {
-        resolveRun = resolve;
-      });
-      vi.mocked(executionClient.executeLocally).mockReturnValue(runPromise);
 
       renderHome();
 
@@ -251,20 +245,49 @@ describe('Home Page', () => {
         expect(screen.getByTestId('lesson-content')).toBeInTheDocument();
       });
 
-      const runButton = screen.getByTestId('run-button');
-      fireEvent.click(runButton);
+      const editToggle = await screen.findByTestId('toggle-edit');
+      fireEvent.click(editToggle);
 
-      await act(async () => {
-        resolveRun({
-          output: '',
-          error: null,
-          timestamp: new Date().toISOString(),
-        });
+      const editor = await screen.findByTestId('python-code-editor');
+      expect(editor).toHaveValue('print("Hello")');
+
+      fireEvent.change(editor, { target: { value: 'print("Edited")' } });
+      expect(editor).toHaveValue('print("Edited")');
+
+      const resetButton = screen.getByTestId('reset-code');
+      fireEvent.click(resetButton);
+
+      fireEvent.click(editToggle);
+      const editorAfterReset = await screen.findByTestId('python-code-editor');
+      expect(editorAfterReset).toHaveValue('print("Hello")');
+    });
+
+    it('shows guidance when execution returns no stdout', async () => {
+      vi.mocked(lessonClient.generateLesson).mockResolvedValue(mockLesson);
+      vi.mocked(executionClient.isPyodideLoaded).mockReturnValue(true);
+      vi.mocked(executionClient.preloadPyodide).mockResolvedValue(undefined);
+      vi.mocked(executionClient.executeLocally).mockResolvedValue({
+        output: '',
+        error: null,
+        timestamp: new Date().toISOString(),
       });
+
+      renderHome();
+
+      const input = screen.getByPlaceholderText(/pandas groupby/i);
+      fireEvent.change(input, { target: { value: 'test' } });
+
+      const generateButton = screen.getByRole('button', { name: /generate lesson/i });
+      fireEvent.click(generateButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('execution-output-empty')).toBeInTheDocument();
+        expect(screen.getByTestId('lesson-content')).toBeInTheDocument();
       });
+
+      const runButton = await screen.findByTestId('run-button');
+      fireEvent.click(runButton);
+
+      await screen.findByTestId('execution-output-empty');
       expect(screen.getByText(/no output yet/i)).toBeInTheDocument();
     });
 
