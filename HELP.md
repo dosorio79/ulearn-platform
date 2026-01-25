@@ -7,7 +7,7 @@
 ## How a lesson works
 1. Enter a topic and choose a difficulty level  
 2. Click **Generate lesson**  
-3. Review the lesson in order: objective → example → exercise  
+3. Review the lesson in order: objective → concept → example → exercise  
 4. Run code, copy Markdown, or export the lesson  
 5. Start a new lesson when ready  
 

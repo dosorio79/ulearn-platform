@@ -27,9 +27,9 @@ Python code blocks include a Run button that executes the snippet in the browser
 
 Set `VITE_PYODIDE_BASE` to override the default Pyodide CDN base URL (defaults to the jsDelivr CDN).
 
-## Mocked API
+## API client (tests mock)
 
-The client generates a realistic lesson response for testing. Components must consume the client and should not call the backend directly.
+The production app calls the backend via `src/api/lessonClient.ts`. Frontend tests mock this client to return realistic lesson responses; components should always consume the client and never call the backend directly.
 
 ## Local development
 

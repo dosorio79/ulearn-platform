@@ -8,20 +8,24 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-01-25
+
 ### Added
 - Editable Python code blocks with per-block Reset.
-
-### Docs
-- Added V1 goals and near-term steps documentation.
-- Captured V1 nice-to-have UX goals for exercise feedback.
 
 ### Changed
 - CI runs backend/frontend tests via Makefile targets.
 - Hardened frontend execution-output tests to reduce flakiness.
 - Added prompt-level assertion for audience level in LLM unit tests.
 
+### Fixed
+- Rendered runnable Python code blocks even when markdown fences omit class names.
+
 ### Docs
+- Added V1 goals and near-term steps documentation.
+- Captured V1 nice-to-have UX goals for exercise feedback.
 - Documented LLM retry behavior in API usage docs.
+- Clarified Render demo deployment, live URL, and CD scope.
 
 ## [0.5.0] - 2026-01-23
 

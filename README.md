@@ -30,7 +30,7 @@ The system:
 - Renders structured blocks into Markdown for the frontend
 - Logs each lesson generation run for telemetry purposes
 
-The system is stateless from a user perspective, but includes a persistence layer for session-level logging and analysis.
+The system is stateless from a user perspective; persistence is limited to append-only telemetry logging.
 
 ---
 
@@ -66,7 +66,6 @@ Lesson generation is implemented using multiple cooperating agents:
 - **ContentAgent** – generates structured content blocks (stub implementation)
 - **ContentAgentLLM** – optional LLM-backed content generator
 - **ValidatorAgent** – enforces structure (required sections, block formatting) and normalizes section minutes to a 15-minute total
-- **PlannerAgent** – allocates section minutes by difficulty (intermediate shifts more time into the example)
 
 Only the content generation step uses an LLM; planning and validation are deterministic and fully testable.
 
@@ -213,6 +212,9 @@ Create your environment file from `.env-example` and update values as needed:
 
 This repository includes a **Render Blueprint–based deployment** designed for **continuous deployment of a self-contained demo**, without external dependencies (LLM APIs or MongoDB).
 
+**Live demo (auto-deploys from `main`)**  
+https://ulearn-frontend.onrender.com/
+
 ### What is deployed
 
 - **Backend (FastAPI)**  
@@ -231,7 +233,9 @@ This repository includes a **Render Blueprint–based deployment** designed for 
 - MongoDB persistence
 - Authenticated user flows
 
-These features are available locally and documented above, but excluded from the Render deployment to ensure reliability and cost-free operation.
+These features are available locally and documented above, but excluded from the Render deployment to keep the demo reliable and cost-free:
+- The full LLM flow requires a valid `OPENAI_API_KEY`.
+- The production dataset/content setup is non-trivial to provision in a public demo environment.
 
 ### Deploying on Render
 
@@ -282,7 +286,7 @@ npm test
 ## CI
 
 GitHub Actions runs backend tests (with a MongoDB service) and frontend lint/test/build on every push and pull request.  
-CI validates correctness; CD is handled separately via Render Blueprint deployment for demo environments.
+CI validates correctness; CD is handled via the Render Blueprint demo deployment, which auto-deploys from `main`.
 
 ---
 

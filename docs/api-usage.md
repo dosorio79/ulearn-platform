@@ -8,6 +8,10 @@ This document describes how to interact with the uLearn API. The single source o
 
 - Local development: `http://localhost:8000`
 
+## OpenAPI versioning note
+
+`openapi.yaml` is the source of truth for the API contract. Its `info.version` reflects the contract version and may not match the app release version.
+
 ## Endpoints
 
 ### POST /lesson
