@@ -14,6 +14,7 @@ from app.services.context7_client import fetch_context_snippets
 from app.services.mcp_hints import (
     collect_hints_from_generated_sections,
     collect_hints_from_markdown_sections,
+    explain_rule_outcomes,
 )
 
 _PYTHON_FENCE_RE = re.compile(r"```python\s*\r?\n(.*?)```", re.DOTALL)
@@ -23,12 +24,16 @@ logger = logging.getLogger(__name__)
 def _python_code_hints_tool(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     mode = payload.get("mode")
     sections = payload.get("sections", [])
+    rule_outcomes = payload.get("rule_outcomes", [])
     if mode == "agentic":
         hints, summary = collect_hints_from_generated_sections(sections)
     elif mode == "static":
         hints, summary = collect_hints_from_markdown_sections(sections)
     else:
         raise ValueError(f"Unsupported MCP hint mode: {mode}")
+
+    if rule_outcomes:
+        hints.extend(explain_rule_outcomes(rule_outcomes))
 
     python_blocks = summary["python_blocks"] if summary else _count_python_blocks(sections, mode)
     _append_context7_hints(hints, sections, mode)

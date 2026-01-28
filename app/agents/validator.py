@@ -4,6 +4,7 @@ import ast
 from typing import Dict, List
 
 from app.models.agents import GeneratedSection, ContentBlock
+from app.agents.validator_rules import RuleEngine
 
 
 class ValidatorAgent:
@@ -23,6 +24,9 @@ class ValidatorAgent:
     JSON_LESSON_KEYS = {"objective", "sections"}
     JSON_SECTION_KEYS = {"id", "title", "minutes", "blocks"}
     JSON_BLOCK_KEYS = {"type", "content"}
+
+    def __init__(self, rule_engine: RuleEngine | None = None) -> None:
+        self._rule_engine = rule_engine or RuleEngine()
 
     def validate(
         self,
@@ -159,6 +163,24 @@ class ValidatorAgent:
             self._validate_exercise_block(block.content)
         if block.type == "text":
             self._validate_text_formatting(block.content)
+
+    def collect_rule_outcomes(self, sections: List[GeneratedSection]) -> list[dict]:
+        outcomes: list[dict] = []
+        for section in sections:
+            for index, block in enumerate(section.blocks):
+                if block.type != "python":
+                    continue
+                rule_outcomes = self._rule_engine.run(block.content)
+                if not rule_outcomes:
+                    continue
+                outcomes.append(
+                    {
+                        "section_id": section.id,
+                        "block_index": index,
+                        "outcomes": [outcome.to_dict() for outcome in rule_outcomes],
+                    }
+                )
+        return outcomes
 
     def _validate_python_block(self, code: str) -> None:
         # 1. Syntax validation (non-negotiable).

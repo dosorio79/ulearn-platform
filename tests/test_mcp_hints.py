@@ -66,6 +66,46 @@ def test_collect_hints_invokes_mcp_tool():
     assert summary is not None
 
 
+def test_collect_hints_accepts_rule_outcomes():
+    sections = [
+        GeneratedSection(
+            id="example",
+            title="Example",
+            minutes=5,
+            blocks=[
+                ContentBlock(type="python", content="print('ok')\n"),
+            ],
+        )
+    ]
+    rule_outcomes = [
+        {
+            "section_id": "example",
+            "block_index": 0,
+            "outcomes": [
+                {
+                    "code": "expression_result_unused",
+                    "context": {},
+                    "line": 1,
+                    "col": 0,
+                }
+            ],
+        }
+    ]
+
+    hints, summary = invoke_tool(
+        "python_code_hints",
+        {"mode": "agentic", "sections": sections, "rule_outcomes": rule_outcomes},
+    )
+
+    assert summary is not None
+    hint_codes = {
+        hint["code"]
+        for entry in hints
+        for hint in entry.get("hints", [])
+    }
+    assert "expression_result_unused" in hint_codes
+
+
 def test_collect_hints_does_not_mutate_blocks():
     section = GeneratedSection(
         id="example",

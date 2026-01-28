@@ -36,6 +36,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
 
     session_id = str(request.session_id) if request.session_id else str(uuid4())
     attempt_count = 1
+    rule_outcomes: list[dict] | None = None
 
     def _summarize_schema_errors(errors: Sequence[Mapping[str, object]]) -> str:
         if not errors:
@@ -87,6 +88,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                     )
 
                 validated_sections = validator_agent.validate(generated_sections)
+                rule_outcomes = validator_agent.collect_rule_outcomes(validated_sections)
 
                 response = LessonResponse(
                     objective=f"Learn {request.topic} at a {request.level} level in 15 minutes.",
@@ -176,9 +178,12 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                 {"mode": "static", "sections": response.sections},
             )
         else:
+            payload = {"mode": "agentic", "sections": validated_sections}
+            if rule_outcomes:
+                payload["rule_outcomes"] = rule_outcomes
             mcp_hints, mcp_summary = invoke_tool(
                 "python_code_hints",
-                {"mode": "agentic", "sections": validated_sections},
+                payload,
             )
 
         if mcp_summary:

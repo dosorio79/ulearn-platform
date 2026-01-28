@@ -14,6 +14,29 @@ _HEAVY_IMPORTS = {"sklearn", "tensorflow", "torch"}
 _UNSAFE_IMPORTS = {"os", "subprocess"}
 _UNSAFE_CALLS = {"call", "popen", "Popen", "run", "system"}
 _OUTPUT_CALLS = {"display", "print", "show"}
+_RULE_TERMINAL_EXAMPLES = (
+    "sum",
+    "agg",
+    "collect",
+    "to_pandas",
+    "show",
+    "execute",
+    "fetchall",
+)
+
+_RULE_HINT_TEMPLATES = {
+    "expression_result_unused": (
+        "Expression result is unused; in scripts it won't display. "
+        "Assign it or wrap it in print(...)."
+    ),
+    "missing_terminal_operation": (
+        "Call chain '{chain}' has no terminal operation. "
+        "Add a terminal step like {examples}."
+    ),
+    "suspicious_attribute": (
+        "Attribute '{attribute}' looks suspicious or deprecated; verify the API name."
+    ),
+}
 
 
 def inspect_python_code(code: str) -> list[dict[str, str]]:
@@ -80,6 +103,34 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
     if not has_output:
         add_hint("no_output", "This block does not produce any output.")
 
+    return hints
+
+
+def explain_rule_outcomes(rule_outcomes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    hints: list[dict[str, Any]] = []
+    for entry in rule_outcomes:
+        entry_hints: list[dict[str, str]] = []
+        for outcome in entry.get("outcomes", []):
+            code_id = outcome.get("code")
+            context = outcome.get("context") or {}
+            template = _RULE_HINT_TEMPLATES.get(code_id)
+            if template:
+                message = template.format(
+                    chain=context.get("chain", "unknown"),
+                    attribute=context.get("attribute", "unknown"),
+                    examples=", ".join(_RULE_TERMINAL_EXAMPLES),
+                )
+            else:
+                message = f"Rule triggered: {code_id}."
+            entry_hints.append({"code": code_id, "message": message})
+        if entry_hints:
+            hints.append(
+                {
+                    "section_id": entry.get("section_id"),
+                    "block_index": entry.get("block_index"),
+                    "hints": entry_hints,
+                }
+            )
     return hints
 
 
