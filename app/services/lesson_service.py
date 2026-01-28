@@ -39,6 +39,9 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
     attempt_count = 1
     rule_outcomes: list[dict] | None = None
     rule_summary: dict[str, object] | None = None
+    rule_hints: list[dict] | None = None
+    runtime_hints: list[dict] | None = None
+    hint_summary: dict[str, int] | None = None
 
     def _summarize_schema_errors(errors: Sequence[Mapping[str, object]]) -> str:
         if not errors:
@@ -90,8 +93,39 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                     )
 
                 validated_sections = validator_agent.validate(generated_sections)
-                rule_outcomes = validator_agent.collect_rule_outcomes(validated_sections)
+                if hasattr(validator_agent, "collect_rule_outcomes"):
+                    rule_outcomes = validator_agent.collect_rule_outcomes(validated_sections)
                 rule_summary = summarize_rule_outcomes(rule_outcomes or [])
+                if rule_outcomes:
+                    rule_hints = []
+                    runtime_hints = []
+                    for entry in rule_outcomes:
+                        runtime_only = [
+                            outcome
+                            for outcome in entry.get("outcomes", [])
+                            if outcome.get("code") == "runtime_error"
+                        ]
+                        rule_only = [
+                            outcome
+                            for outcome in entry.get("outcomes", [])
+                            if outcome.get("code") != "runtime_error"
+                        ]
+                        if rule_only:
+                            rule_hints.append(
+                                {
+                                    "section_id": entry.get("section_id"),
+                                    "block_index": entry.get("block_index"),
+                                    "outcomes": rule_only,
+                                }
+                            )
+                        if runtime_only:
+                            runtime_hints.append(
+                                {
+                                    "section_id": entry.get("section_id"),
+                                    "block_index": entry.get("block_index"),
+                                    "outcomes": runtime_only,
+                                }
+                            )
 
                 response = LessonResponse(
                     objective=f"Learn {request.topic} at a {request.level} level in 15 minutes.",
@@ -218,6 +252,22 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
     # ---------------------------
     # Telemetry (best-effort)
     # ---------------------------
+    if hint_summary is None:
+        hint_summary = {
+            "rule_hints": sum(len(entry.get("outcomes", [])) for entry in rule_hints or []),
+            "runtime_errors": sum(len(entry.get("outcomes", [])) for entry in runtime_hints or []),
+            "mcp_explanations": mcp_summary["total_hints"] if mcp_summary else 0,
+        }
+    logger.info(
+        "hint_summary",
+        extra={
+            "session_id": session_id,
+            "rule_hints": hint_summary["rule_hints"],
+            "runtime_errors": hint_summary["runtime_errors"],
+            "mcp_explanations": hint_summary["mcp_explanations"],
+        },
+    )
+
     telemetry = LessonRun(
         run_id=str(uuid4()),
         session_id=session_id,
@@ -228,6 +278,9 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         total_minutes=response.total_minutes,
         objective=response.objective,
         section_ids=[s.id for s in response.sections],
+        hint_summary=hint_summary,
+        rule_hints=rule_hints if config.TELEMETRY_INCLUDE_HINT_DETAILS else None,
+        runtime_hints=runtime_hints if config.TELEMETRY_INCLUDE_HINT_DETAILS else None,
         mcp_hints=mcp_hints,
         mcp_summary=mcp_summary,
         rule_summary=rule_summary,

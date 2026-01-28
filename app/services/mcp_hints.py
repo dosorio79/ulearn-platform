@@ -36,6 +36,9 @@ _RULE_HINT_TEMPLATES = {
     "suspicious_attribute": (
         "Attribute '{attribute}' looks suspicious or deprecated; verify the API name."
     ),
+    "runtime_error": (
+        "Runtime error: {error} — {message}."
+    ),
 }
 
 
@@ -138,6 +141,8 @@ def explain_rule_outcomes(rule_outcomes: list[dict[str, Any]]) -> list[dict[str,
                 message = template.format(
                     chain=context.get("chain", "unknown"),
                     attribute=context.get("attribute", "unknown"),
+                    error=context.get("error", "Error"),
+                    message=context.get("message", "No message"),
                     examples=", ".join(_RULE_TERMINAL_EXAMPLES),
                 )
             else:

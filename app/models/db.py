@@ -22,6 +22,9 @@ class LessonRunModel(BaseModel):
     total_minutes: int
     objective: str
     section_ids: List[str]
+    hint_summary: Optional[dict[str, Any]] = None
+    rule_hints: Optional[List[dict[str, Any]]] = None
+    runtime_hints: Optional[List[dict[str, Any]]] = None
     mcp_hints: Optional[List[dict[str, Any]]] = None
     mcp_summary: Optional[dict[str, Any]] = None
     rule_summary: Optional[dict[str, Any]] = None
@@ -56,6 +59,9 @@ class LessonRun:
     total_minutes: int
     objective: str
     section_ids: List[str]
+    hint_summary: Optional[dict[str, Any]] = None
+    rule_hints: Optional[List[dict[str, Any]]] = None
+    runtime_hints: Optional[List[dict[str, Any]]] = None
     mcp_hints: Optional[List[dict[str, Any]]] = None
     mcp_summary: Optional[dict[str, Any]] = None
     rule_summary: Optional[dict[str, Any]] = None
@@ -73,6 +79,9 @@ class LessonRun:
             total_minutes=self.total_minutes,
             objective=self.objective,
             section_ids=self.section_ids,
+            hint_summary=self.hint_summary,
+            rule_hints=self.rule_hints,
+            runtime_hints=self.runtime_hints,
             mcp_hints=self.mcp_hints,
             mcp_summary=self.mcp_summary,
             rule_summary=self.rule_summary,
@@ -91,6 +100,12 @@ class LessonRun:
             "objective": self.objective,
             "section_ids": self.section_ids,
         }
+        if self.hint_summary is not None:
+            doc["hint_summary"] = self.hint_summary
+        if self.rule_hints is not None:
+            doc["rule_hints"] = self.rule_hints
+        if self.runtime_hints is not None:
+            doc["runtime_hints"] = self.runtime_hints
         if self.mcp_hints is not None:
             doc["mcp_hints"] = self.mcp_hints
         if self.mcp_summary is not None:

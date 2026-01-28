@@ -29,6 +29,7 @@ try:
     TELEMETRY_MEMORY_CAP = int(os.getenv("TELEMETRY_MEMORY_CAP", "1000"))
 except (TypeError, ValueError):
     TELEMETRY_MEMORY_CAP = 1000
+TELEMETRY_INCLUDE_HINT_DETAILS = os.getenv("TELEMETRY_INCLUDE_HINT_DETAILS", "true").lower() == "true"
 
 # Lesson execution modes
 STATIC_LESSON_MODE = os.getenv("STATIC_LESSON_MODE", "false").lower() == "true"
@@ -49,6 +50,15 @@ if DEMO_MODE:
 # ---------------------------
 VALID_TELEMETRY_BACKENDS = {"mongo", "memory"}
 
+# Runtime smoke test (advisory only)
+RUNTIME_SMOKE_TEST_ENABLED = os.getenv("RUNTIME_SMOKE_TEST_ENABLED", "false").lower() == "true"
+try:
+    RUNTIME_SMOKE_TEST_TIMEOUT_SECONDS = float(
+        os.getenv("RUNTIME_SMOKE_TEST_TIMEOUT_SECONDS", "0.25")
+    )
+except (TypeError, ValueError):
+    RUNTIME_SMOKE_TEST_TIMEOUT_SECONDS = 0.25
+
 if TELEMETRY_BACKEND not in VALID_TELEMETRY_BACKENDS:
     raise ValueError(
         f"Invalid TELEMETRY_BACKEND '{TELEMETRY_BACKEND}'. "
@@ -64,4 +74,5 @@ def runtime_mode() -> dict:
         "static_lesson_mode": STATIC_LESSON_MODE,
         "telemetry_backend": TELEMETRY_BACKEND,
         "model": MODEL,
+        "runtime_smoke_test_enabled": RUNTIME_SMOKE_TEST_ENABLED,
     }

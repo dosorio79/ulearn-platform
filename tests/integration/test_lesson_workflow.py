@@ -72,3 +72,6 @@ def test_lesson_endpoint_records_rule_engine_hints(monkeypatch):
     rule_summary = runs[-1].get("rule_summary")
     assert rule_summary is not None
     assert rule_summary["by_code"]["expression_result_unused"] == 1
+    hint_summary = runs[-1].get("hint_summary")
+    assert hint_summary is not None
+    assert hint_summary["rule_hints"] >= 1

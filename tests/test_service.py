@@ -113,6 +113,11 @@ def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
     runs = mongo.get_memory_runs()
     assert runs
     assert "mcp_summary" in runs[-1]
+    hint_summary = runs[-1].get("hint_summary")
+    assert hint_summary is not None
+    assert hint_summary["rule_hints"] >= 0
+    assert hint_summary["runtime_errors"] >= 0
+    assert hint_summary["mcp_explanations"] >= 0
 
 
 def test_static_lesson_includes_level_guidance():
