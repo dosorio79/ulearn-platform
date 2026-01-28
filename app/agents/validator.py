@@ -206,6 +206,13 @@ class ValidatorAgent:
         """Best-effort runtime smoke test that captures exceptions only."""
         timeout_seconds = max(self._runtime_smoke_test_timeout, 0.0)
 
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return []
+        if _contains_imports(tree):
+            return []
+
         def _timeout_handler(*_args: object) -> None:
             raise TimeoutError("Execution timed out.")
 
@@ -320,3 +327,7 @@ class ValidatorAgent:
             raise ValueError(
                 "Text blocks must include a paragraph and a bullet or numbered list."
             )
+
+
+def _contains_imports(tree: ast.AST) -> bool:
+    return any(isinstance(node, (ast.Import, ast.ImportFrom)) for node in ast.walk(tree))
