@@ -28,6 +28,7 @@ class LessonRunModel(BaseModel):
     mcp_hints: Optional[List[dict[str, Any]]] = None
     mcp_summary: Optional[dict[str, Any]] = None
     rule_summary: Optional[dict[str, Any]] = None
+    system_observations: Optional[dict[str, Any]] = None
 
 
 class LessonFailureModel(BaseModel):
@@ -65,6 +66,7 @@ class LessonRun:
     mcp_hints: Optional[List[dict[str, Any]]] = None
     mcp_summary: Optional[dict[str, Any]] = None
     rule_summary: Optional[dict[str, Any]] = None
+    system_observations: Optional[dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Validate fields once at construction time."""
@@ -85,6 +87,7 @@ class LessonRun:
             mcp_hints=self.mcp_hints,
             mcp_summary=self.mcp_summary,
             rule_summary=self.rule_summary,
+            system_observations=self.system_observations,
         )
 
     def to_mongo(self) -> dict:
@@ -112,6 +115,8 @@ class LessonRun:
             doc["mcp_summary"] = self.mcp_summary
         if self.rule_summary is not None:
             doc["rule_summary"] = self.rule_summary
+        if self.system_observations is not None:
+            doc["system_observations"] = self.system_observations
         return doc
 
 

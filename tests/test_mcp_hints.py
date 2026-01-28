@@ -66,6 +66,30 @@ def test_collect_hints_invokes_mcp_tool():
     assert summary is not None
 
 
+def test_filter_mcp_hints_excludes_environment_codes():
+    from app.services.lesson_service import _filter_mcp_hints
+
+    hints = [
+        {
+            "section_id": "example",
+            "block_index": 0,
+            "hints": [
+                {"code": "third_party_import", "message": "env"},
+                {"code": "no_output", "message": "learner"},
+            ],
+        }
+    ]
+
+    learner, environment = _filter_mcp_hints(hints)
+
+    assert learner
+    assert environment
+    learner_codes = {hint["code"] for hint in learner[0]["hints"]}
+    environment_codes = {hint["code"] for hint in environment[0]["hints"]}
+    assert "no_output" in learner_codes
+    assert "third_party_import" in environment_codes
+
+
 def test_collect_hints_accepts_rule_outcomes():
     sections = [
         GeneratedSection(

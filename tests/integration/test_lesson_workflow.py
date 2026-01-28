@@ -25,6 +25,8 @@ def test_lesson_endpoint_records_mcp_summary(monkeypatch, static_mode):
     runs = mongo.get_memory_runs()
     assert runs
     assert "mcp_summary" in runs[-1]
+    if "system_observations" in runs[-1]:
+        assert runs[-1]["system_observations"]["mcp_environment_notes"]
 
 
 def test_lesson_endpoint_records_rule_engine_hints(monkeypatch):

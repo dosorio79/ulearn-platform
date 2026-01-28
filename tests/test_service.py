@@ -96,6 +96,46 @@ def test_generate_lesson_static_mode_invokes_mcp_tool(monkeypatch):
     assert response.model_dump() == expected.model_dump()
 
 
+def test_generate_lesson_records_system_observations_for_environment_mcp_hints(monkeypatch):
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", True)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+
+    def fake_invoke_tool(name: str, payload: dict[str, object]):
+        return (
+            [
+                {
+                    "section_id": "example",
+                    "block_index": 0,
+                    "hints": [
+                        {
+                            "code": "third_party_import",
+                            "message": "Third-party import 'polars' may be unavailable.",
+                        }
+                    ],
+                }
+            ],
+            {"python_blocks": 1, "blocks_with_hints": 1, "total_hints": 1},
+        )
+
+    monkeypatch.setattr(lesson_service, "invoke_tool", fake_invoke_tool)
+
+    request = LessonRequest(
+        topic="Polars when then otherwise",
+        level="beginner",
+    )
+
+    _ = asyncio.run(generate_lesson(request))
+
+    runs = mongo.get_memory_runs()
+    assert runs
+    system_observations = runs[-1].get("system_observations")
+    assert system_observations is not None
+    assert system_observations["mcp_environment_notes"]
+    assert "mcp_hints" in runs[-1]
+    assert runs[-1]["mcp_hints"] == []
+
+
 @pytest.mark.parametrize("static_mode", [True, False])
 def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
     monkeypatch.setattr(config, "STATIC_LESSON_MODE", static_mode)
