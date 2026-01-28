@@ -1,4 +1,9 @@
-"""Rule engine for advisory Python code hints."""
+"""Rule engine for advisory Python code hints.
+
+This module provides deterministic, AST-based heuristics to detect
+common Python code usage issues. All rules are advisory: they never
+raise, never block generation, and never execute code.
+"""
 
 from __future__ import annotations
 
@@ -6,8 +11,14 @@ import ast
 from dataclasses import dataclass
 from typing import Any, Iterable
 
+
+# Functions that produce visible output in the execution environment
 _OUTPUT_CALLS = {"print", "display", "show"}
+
+# Deprecated / suspicious attributes seen across common data libraries
 _SUSPICIOUS_ATTRS = {"ix", "as_matrix", "get_value", "set_value", "iteritems"}
+
+# Methods typically used to transform data but not execute it
 _TRANSFORM_METHODS = {
     "groupby",
     "select",
@@ -18,25 +29,35 @@ _TRANSFORM_METHODS = {
     "map",
     "apply",
 }
-_TERMINAL_METHODS = {
-    "agg",
-    "aggregate",
+
+# Methods that usually trigger execution / materialization
+_EXECUTION_TERMINALS = {
     "collect",
-    "count",
     "execute",
     "fetchall",
     "fetchone",
-    "fit",
-    "mean",
-    "predict",
     "show",
-    "sum",
     "to_pandas",
     "topandas",
     "to_csv",
     "to_parquet",
 }
 
+# Aggregations that may look terminal but are often lazy / non-executing
+_AGGREGATION_METHODS = {
+    "agg",
+    "aggregate",
+    "count",
+    "fit",
+    "mean",
+    "predict",
+    "sum",
+}
+
+
+# ----------------------------
+# Core data structures
+# ----------------------------
 
 @dataclass(frozen=True)
 class RuleOutcome:
@@ -55,17 +76,26 @@ class RuleOutcome:
 
 
 class Rule:
+    """Base class for all advisory rules."""
+
     code: str
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
         raise NotImplementedError
 
 
+# ----------------------------
+# Rules
+# ----------------------------
+
 class BareExpressionRule(Rule):
+    """Detect expressions whose result is neither used nor shown."""
+
     code = "expression_result_unused"
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
         outcomes: list[RuleOutcome] = []
+
         if not isinstance(tree, ast.Module):
             return outcomes
 
@@ -76,6 +106,7 @@ class BareExpressionRule(Rule):
                 continue
             if _is_output_call(stmt.value):
                 continue
+
             outcomes.append(
                 RuleOutcome(
                     code=self.code,
@@ -84,19 +115,24 @@ class BareExpressionRule(Rule):
                     col=getattr(stmt, "col_offset", None),
                 )
             )
+
         return outcomes
 
 
 class SuspiciousAttributeRule(Rule):
+    """Detect deprecated or suspicious attribute usage."""
+
     code = "suspicious_attribute"
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
         outcomes: list[RuleOutcome] = []
+
         for node in ast.walk(tree):
             if not isinstance(node, ast.Attribute):
                 continue
             if node.attr not in _SUSPICIOUS_ATTRS:
                 continue
+
             outcomes.append(
                 RuleOutcome(
                     code=self.code,
@@ -105,14 +141,18 @@ class SuspiciousAttributeRule(Rule):
                     col=getattr(node, "col_offset", None),
                 )
             )
+
         return outcomes
 
 
 class MissingTerminalOperationRule(Rule):
+    """Detect transformation or aggregation chains without execution."""
+
     code = "missing_terminal_operation"
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
         outcomes: list[RuleOutcome] = []
+
         if not isinstance(tree, ast.Module):
             return outcomes
 
@@ -121,25 +161,37 @@ class MissingTerminalOperationRule(Rule):
                 continue
             if _is_output_call(stmt.value):
                 continue
-            methods = _extract_call_chain(stmt.value)
+
+            methods = _extract_attribute_chain(stmt.value)
             if not methods:
                 continue
-            lowered = [method.lower() for method in methods]
-            if any(method in _TRANSFORM_METHODS for method in lowered) and not any(
-                method in _TERMINAL_METHODS for method in lowered
-            ):
+
+            lowered = [m.lower() for m in methods]
+
+            has_transform = any(m in _TRANSFORM_METHODS for m in lowered)
+            has_aggregation = any(m in _AGGREGATION_METHODS for m in lowered)
+            has_execution = any(m in _EXECUTION_TERMINALS for m in lowered)
+
+            if (has_transform or has_aggregation) and not has_execution:
                 outcomes.append(
                     RuleOutcome(
                         code=self.code,
-                        context={"chain": " -> ".join(reversed(methods))},
+                        context={"chain": " -> ".join(methods)},
                         line=getattr(stmt, "lineno", None),
                         col=getattr(stmt, "col_offset", None),
                     )
                 )
+
         return outcomes
 
 
+# ----------------------------
+# Engine
+# ----------------------------
+
 class RuleEngine:
+    """Applies a set of advisory rules to Python source code."""
+
     def __init__(self, rules: Iterable[Rule] | None = None) -> None:
         self._rules = list(rules) if rules is not None else list(_default_rules())
 
@@ -147,10 +199,14 @@ class RuleEngine:
         try:
             tree = ast.parse(code)
         except SyntaxError:
+            # Hard validation already failed upstream
             return []
+
         outcomes: list[RuleOutcome] = []
         for rule in self._rules:
             outcomes.extend(rule.apply(tree, code))
+
+        outcomes = _apply_precedence(outcomes)
         return _dedupe_outcomes(outcomes)
 
 
@@ -162,49 +218,95 @@ def _default_rules() -> Iterable[Rule]:
     )
 
 
+# ----------------------------
+# Helpers
+# ----------------------------
+
 def _is_docstring(stmt: ast.Expr, index: int) -> bool:
-    if index != 0:
-        return False
-    return isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str)
+    return (
+        index == 0
+        and isinstance(stmt.value, ast.Constant)
+        and isinstance(stmt.value.value, str)
+    )
 
 
 def _is_output_call(node: ast.AST) -> bool:
     if not isinstance(node, ast.Call):
         return False
+
     func = node.func
     if isinstance(func, ast.Name):
         return func.id in _OUTPUT_CALLS
     if isinstance(func, ast.Attribute):
         return func.attr in _OUTPUT_CALLS
+
     return False
 
 
-def _extract_call_chain(node: ast.AST) -> list[str]:
+def _extract_attribute_chain(node: ast.AST) -> list[str]:
+    """Extract chained attribute names from a call or attribute expression."""
+
     methods: list[str] = []
     current = node
-    while isinstance(current, ast.Call):
-        func = current.func
-        if isinstance(func, ast.Attribute):
-            methods.append(func.attr)
-            current = func.value
-        else:
-            break
+
+    while True:
+        if isinstance(current, ast.Call):
+            current = current.func
+            continue
+        if isinstance(current, ast.Attribute):
+            methods.append(current.attr)
+            current = current.value
+            continue
+        if isinstance(current, ast.Subscript):
+            current = current.value
+            continue
+        break
+
+    methods.reverse()
     return methods
+
+
+def _apply_precedence(outcomes: list[RuleOutcome]) -> list[RuleOutcome]:
+    """Suppress lower-value hints when higher-value ones fire on the same line."""
+
+    suppress_lines = {
+        o.line
+        for o in outcomes
+        if o.code == "missing_terminal_operation" and o.line is not None
+    }
+
+    if not suppress_lines:
+        return outcomes
+
+    filtered: list[RuleOutcome] = []
+    for outcome in outcomes:
+        if (
+            outcome.code == "expression_result_unused"
+            and outcome.line in suppress_lines
+        ):
+            continue
+        filtered.append(outcome)
+
+    return filtered
 
 
 def _dedupe_outcomes(outcomes: list[RuleOutcome]) -> list[RuleOutcome]:
     seen: set[tuple[Any, ...]] = set()
     deduped: list[RuleOutcome] = []
+
     for outcome in outcomes:
         context_key = tuple(
-            (key, _freeze_value(value))
-            for key, value in sorted(outcome.context.items())
+            (k, _freeze_value(v))
+            for k, v in sorted(outcome.context.items())
         )
         key = (outcome.code, outcome.line, outcome.col, context_key)
+
         if key in seen:
             continue
+
         seen.add(key)
         deduped.append(outcome)
+
     return deduped
 
 

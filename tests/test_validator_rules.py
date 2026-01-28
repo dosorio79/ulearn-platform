@@ -19,6 +19,13 @@ def test_rule_engine_flags_missing_terminal_operation():
     assert "missing_terminal_operation" in codes
 
 
+def test_rule_engine_flags_aggregation_without_execution_terminal():
+    engine = RuleEngine()
+    outcomes = engine.run("df.groupby('a').sum()\n")
+    codes = {outcome.code for outcome in outcomes}
+    assert "missing_terminal_operation" in codes
+
+
 def test_rule_engine_flags_suspicious_attribute():
     engine = RuleEngine()
     outcomes = engine.run("df.ix[0]\n")
@@ -30,3 +37,18 @@ def test_rule_engine_allows_printed_terminal_operation():
     engine = RuleEngine()
     outcomes = engine.run("print(df.groupby('a').sum())\n")
     assert outcomes == []
+
+
+def test_rule_engine_handles_multiline_chain():
+    engine = RuleEngine()
+    code = "(df.groupby('a')\n    .select('b')\n)"
+    outcomes = engine.run(code)
+    codes = {outcome.code for outcome in outcomes}
+    assert "missing_terminal_operation" in codes
+
+
+def test_rule_engine_suppresses_expression_hint_when_terminal_missing():
+    engine = RuleEngine()
+    outcomes = engine.run("df.groupby('a')\n")
+    codes = {outcome.code for outcome in outcomes}
+    assert "expression_result_unused" not in codes

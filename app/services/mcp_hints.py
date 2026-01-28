@@ -106,6 +106,26 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
     return hints
 
 
+def summarize_rule_outcomes(rule_outcomes: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not rule_outcomes:
+        return None
+    counts: dict[str, int] = {}
+    total_outcomes = 0
+    for entry in rule_outcomes:
+        for outcome in entry.get("outcomes", []):
+            code_id = outcome.get("code")
+            if not code_id:
+                continue
+            counts[code_id] = counts.get(code_id, 0) + 1
+            total_outcomes += 1
+    return {
+        "blocks_with_outcomes": len(rule_outcomes),
+        "total_outcomes": total_outcomes,
+        "unique_codes": len(counts),
+        "by_code": counts,
+    }
+
+
 def explain_rule_outcomes(rule_outcomes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     hints: list[dict[str, Any]] = []
     for entry in rule_outcomes:

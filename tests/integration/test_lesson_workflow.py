@@ -69,3 +69,6 @@ def test_lesson_endpoint_records_rule_engine_hints(monkeypatch):
         for hint in entry.get("hints", [])
     }
     assert "expression_result_unused" in hint_codes
+    rule_summary = runs[-1].get("rule_summary")
+    assert rule_summary is not None
+    assert rule_summary["by_code"]["expression_result_unused"] == 1

@@ -13,6 +13,7 @@ from app.models.db import LessonRun, LessonFailure
 from app.services.mongo import insert_lesson_run, insert_lesson_failure
 from app.services.static_lessons import build_static_lesson
 from app.services.markdown_renderer import render_blocks_to_markdown
+from app.services.mcp_hints import summarize_rule_outcomes
 from app.agents.mcp_tools import invoke_tool
 from app.agents.planner import PlannerAgent
 from app.agents.content import ContentAgent
@@ -37,6 +38,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
     session_id = str(request.session_id) if request.session_id else str(uuid4())
     attempt_count = 1
     rule_outcomes: list[dict] | None = None
+    rule_summary: dict[str, object] | None = None
 
     def _summarize_schema_errors(errors: Sequence[Mapping[str, object]]) -> str:
         if not errors:
@@ -89,6 +91,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
 
                 validated_sections = validator_agent.validate(generated_sections)
                 rule_outcomes = validator_agent.collect_rule_outcomes(validated_sections)
+                rule_summary = summarize_rule_outcomes(rule_outcomes or [])
 
                 response = LessonResponse(
                     objective=f"Learn {request.topic} at a {request.level} level in 15 minutes.",
@@ -227,6 +230,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         section_ids=[s.id for s in response.sections],
         mcp_hints=mcp_hints,
         mcp_summary=mcp_summary,
+        rule_summary=rule_summary,
     )
 
     try:
