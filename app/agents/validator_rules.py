@@ -92,6 +92,7 @@ class BareExpressionRule(Rule):
     """Detect expressions whose result is neither used nor shown."""
 
     code = "expression_result_unused"
+    _correction_intent = "add_visible_output"
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
         outcomes: list[RuleOutcome] = []
@@ -110,7 +111,10 @@ class BareExpressionRule(Rule):
             outcomes.append(
                 RuleOutcome(
                     code=self.code,
-                    context={"node_type": type(stmt.value).__name__},
+                    context={
+                        "node_type": type(stmt.value).__name__,
+                        "correction_intent": self._correction_intent,
+                    },
                     line=getattr(stmt, "lineno", None),
                     col=getattr(stmt, "col_offset", None),
                 )
@@ -149,6 +153,7 @@ class MissingTerminalOperationRule(Rule):
     """Detect transformation or aggregation chains without execution."""
 
     code = "missing_terminal_operation"
+    _correction_intent = "add_execution_step"
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
         outcomes: list[RuleOutcome] = []
@@ -176,7 +181,10 @@ class MissingTerminalOperationRule(Rule):
                 outcomes.append(
                     RuleOutcome(
                         code=self.code,
-                        context={"chain": " -> ".join(methods)},
+                        context={
+                            "chain": " -> ".join(methods),
+                            "correction_intent": self._correction_intent,
+                        },
                         line=getattr(stmt, "lineno", None),
                         col=getattr(stmt, "col_offset", None),
                     )

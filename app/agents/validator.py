@@ -260,6 +260,7 @@ class ValidatorAgent:
                     context={
                         "error": type(exc).__name__,
                         "message": str(exc),
+                        "correction_intent": "inspect_runtime_error",
                     },
                     line=None,
                     col=None,
