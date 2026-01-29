@@ -345,8 +345,40 @@ def _record_failure(
     error_details=None,
     attempt_count: int | None = None,
     exc: Exception | None = None,
-    ) -> None:
+) -> None:
     """Best-effort failure telemetry."""
+
+    failure = LessonFailure(
+        run_id=str(uuid4()),
+        session_id=session_id,
+        topic=request.topic,
+        level=request.level,
+        created_at=datetime.now(timezone.utc),
+        attempt_count=attempt_count,
+        error_type=error_type,
+        error_message=error_message,
+        error_details=error_details,
+    )
+
+    try:
+        insert_lesson_failure(failure.to_mongo())
+    except Exception as insert_exc:
+        logger.warning(
+            "Failure insert failed run_id=%s session_id=%s",
+            failure.run_id,
+            session_id,
+            exc_info=insert_exc,
+        )
+
+    logger.error(
+        "Lesson generation failed",
+        extra={
+            "topic": request.topic,
+            "difficulty": request.level,
+            "error_type": error_type,
+        },
+        exc_info=exc,
+    )
 
 
 def _filter_mcp_hints(
@@ -403,35 +435,3 @@ def _rebuild_mcp_summary(
         "blocks_with_hints": len(hints or []),
         "total_hints": hint_count,
     }
-
-    failure = LessonFailure(
-        run_id=str(uuid4()),
-        session_id=session_id,
-        topic=request.topic,
-        level=request.level,
-        created_at=datetime.now(timezone.utc),
-        attempt_count=attempt_count,
-        error_type=error_type,
-        error_message=error_message,
-        error_details=error_details,
-    )
-
-    try:
-        insert_lesson_failure(failure.to_mongo())
-    except Exception as insert_exc:
-        logger.warning(
-            "Failure insert failed run_id=%s session_id=%s",
-            failure.run_id,
-            session_id,
-            exc_info=insert_exc,
-        )
-
-    logger.error(
-        "Lesson generation failed",
-        extra={
-            "topic": request.topic,
-            "difficulty": request.level,
-            "error_type": error_type,
-        },
-        exc_info=exc,
-    )

@@ -238,6 +238,7 @@ def test_generate_lesson_persists_schema_failure(monkeypatch):
 
     insert_failure = Mock()
 
+    monkeypatch.setattr(config, "USE_LLM_CONTENT", False)
     monkeypatch.setattr(lesson_service, "planner_agent", DummyPlanner())
     monkeypatch.setattr(lesson_service, "content_agent", DummyContent(validation_error))
     monkeypatch.setattr(lesson_service, "validator_agent", DummyValidator())
@@ -292,6 +293,7 @@ def test_generate_lesson_persists_content_failure(monkeypatch):
 
     insert_failure = Mock()
 
+    monkeypatch.setattr(config, "USE_LLM_CONTENT", False)
     monkeypatch.setattr(lesson_service, "planner_agent", DummyPlanner())
     monkeypatch.setattr(lesson_service, "content_agent", DummyContent())
     monkeypatch.setattr(lesson_service, "validator_agent", DummyValidator())
