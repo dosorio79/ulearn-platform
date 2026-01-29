@@ -13,6 +13,12 @@ def test_rule_engine_flags_expression_result_unused():
     codes = {outcome.code for outcome in outcomes}
     assert "expression_result_unused" in codes
     assert "no_output" in codes
+    suggestions = [
+        suggestion
+        for outcome in outcomes
+        for suggestion in outcome.context.get("correction_suggestions", [])
+    ]
+    assert any(suggestion["intent"] == "add_visible_output" for suggestion in suggestions)
 
 
 def test_rule_engine_flags_missing_terminal_operation():

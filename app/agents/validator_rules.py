@@ -107,12 +107,14 @@ class BareExpressionRule(Rule):
                 continue
             if _is_output_call(stmt.value):
                 continue
+            expression_source = ast.get_source_segment(code, stmt.value) or ""
 
             outcomes.append(
                 RuleOutcome(
                     code=self.code,
                     context={
                         "node_type": type(stmt.value).__name__,
+                        "expression_source": expression_source.strip(),
                         "correction_intent": self._correction_intent,
                     },
                     line=getattr(stmt, "lineno", None),
@@ -239,6 +241,7 @@ class RuleEngine:
         for rule in self._rules:
             outcomes.extend(rule.apply(tree, code))
 
+        outcomes = _attach_correction_suggestions(outcomes)
         outcomes = _apply_precedence(outcomes)
         return _dedupe_outcomes(outcomes)
 
@@ -344,9 +347,33 @@ def _dedupe_outcomes(outcomes: list[RuleOutcome]) -> list[RuleOutcome]:
     return deduped
 
 
+def _attach_correction_suggestions(outcomes: list[RuleOutcome]) -> list[RuleOutcome]:
+    updated: list[RuleOutcome] = []
+    for outcome in outcomes:
+        intent = outcome.context.get("correction_intent")
+        if intent == "add_visible_output":
+            expression = outcome.context.get("expression_source", "")
+            if expression:
+                context = dict(outcome.context)
+                context["correction_suggestions"] = [
+                    {
+                        "intent": intent,
+                        "suggested_code": f"print({expression})",
+                    }
+                ]
+                outcome = RuleOutcome(
+                    code=outcome.code,
+                    context=context,
+                    line=outcome.line,
+                    col=outcome.col,
+                )
+        updated.append(outcome)
+    return updated
+
+
 def _freeze_value(value: Any) -> Any:
     if isinstance(value, list):
-        return tuple(value)
+        return tuple(_freeze_value(item) for item in value)
     if isinstance(value, dict):
         return tuple(sorted((k, _freeze_value(v)) for k, v in value.items()))
     return value
