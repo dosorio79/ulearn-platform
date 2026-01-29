@@ -36,28 +36,28 @@ logs:
 
 test:
 	@uv sync --extra dev
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest
 
 sync-dev:
 	@uv sync --extra dev
 
 test-unit:
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest -m unit
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest -m unit
 
 test-api:
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest -m api
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest -m api
 
 test-content-parse:
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest -m content_parse
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest -m content_parse
 
 test-integration:
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest -m integration
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest -m integration
 
 test-service:
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest tests/test_service.py
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest tests/test_service.py
 
 test-hints:
-	@set -a; . ./.env; . ./.env.test; set +a; uv run pytest tests/test_validator_rules.py tests/test_mcp_hints.py tests/integration/test_lesson_workflow.py
+	@set -a; [ -f ./.env ] && . ./.env; [ -f ./.env.test ] && . ./.env.test; set +a; uv run pytest tests/test_validator_rules.py tests/test_mcp_hints.py tests/integration/test_lesson_workflow.py
 
 test-frontend:
 	@cd frontend && npm test

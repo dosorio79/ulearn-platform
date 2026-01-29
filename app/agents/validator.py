@@ -2,6 +2,7 @@
 
 import ast
 import signal
+import threading
 from typing import Dict, List
 
 from app.core import config
@@ -206,6 +207,9 @@ class ValidatorAgent:
         """Best-effort runtime smoke test that captures exceptions only."""
         timeout_seconds = max(self._runtime_smoke_test_timeout, 0.0)
 
+        if threading.current_thread() is not threading.main_thread():
+            return []
+
         try:
             tree = ast.parse(code)
         except SyntaxError:
@@ -238,12 +242,14 @@ class ValidatorAgent:
         locals_dict: dict[str, object] = {}
 
         previous_handler = None
+        signal_armed = False
         try:
             if timeout_seconds > 0:
                 try:
                     previous_handler = signal.getsignal(signal.SIGALRM)
                     signal.signal(signal.SIGALRM, _timeout_handler)
                     signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                    signal_armed = True
                 except (AttributeError, ValueError, OSError):
                     return []
             exec(code, globals_dict, locals_dict)
@@ -260,7 +266,7 @@ class ValidatorAgent:
                 )
             ]
         finally:
-            if timeout_seconds > 0:
+            if timeout_seconds > 0 and signal_armed:
                 signal.setitimer(signal.ITIMER_REAL, 0)
                 if previous_handler is not None:
                     signal.signal(signal.SIGALRM, previous_handler)
