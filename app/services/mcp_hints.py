@@ -13,7 +13,6 @@ _ALLOWED_THIRD_PARTY = {"numpy", "pandas", "scipy"}
 _HEAVY_IMPORTS = {"sklearn", "tensorflow", "torch"}
 _UNSAFE_IMPORTS = {"os", "subprocess"}
 _UNSAFE_CALLS = {"call", "popen", "Popen", "run", "system"}
-_OUTPUT_CALLS = {"display", "print", "show"}
 _RULE_TERMINAL_EXAMPLES = (
     "sum",
     "agg",
@@ -78,20 +77,15 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
     if imports & _UNSAFE_IMPORTS:
         add_hint("unsafe_import", "Potentially unsafe module import detected.")
 
-    has_output = False
     saw_apply = False
     saw_unsafe_call = False
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             func = node.func
             if isinstance(func, ast.Name):
-                if func.id in _OUTPUT_CALLS:
-                    has_output = True
                 if func.id in {"eval", "exec"}:
                     saw_unsafe_call = True
             elif isinstance(func, ast.Attribute):
-                if func.attr in _OUTPUT_CALLS:
-                    has_output = True
                 if func.attr == "apply":
                     saw_apply = True
                 if func.attr in _UNSAFE_CALLS:
@@ -102,9 +96,6 @@ def inspect_python_code(code: str) -> list[dict[str, str]]:
 
     if saw_apply:
         add_hint("pandas_apply", "Pandas apply can be slow; consider vectorized operations.")
-
-    if not has_output:
-        add_hint("no_output", "This block does not produce any output.")
 
     return hints
 

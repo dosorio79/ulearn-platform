@@ -193,6 +193,31 @@ class MissingTerminalOperationRule(Rule):
         return outcomes
 
 
+class NoOutputRule(Rule):
+    """Detect code blocks that never produce visible output."""
+
+    code = "no_output"
+    _correction_intent = "add_visible_output"
+
+    def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            if isinstance(func, ast.Name) and func.id in _OUTPUT_CALLS:
+                return []
+            if isinstance(func, ast.Attribute) and func.attr in _OUTPUT_CALLS:
+                return []
+        return [
+            RuleOutcome(
+                code=self.code,
+                context={"correction_intent": self._correction_intent},
+                line=None,
+                col=None,
+            )
+        ]
+
+
 # ----------------------------
 # Engine
 # ----------------------------
@@ -222,6 +247,7 @@ def _default_rules() -> Iterable[Rule]:
     return (
         BareExpressionRule(),
         MissingTerminalOperationRule(),
+        NoOutputRule(),
         SuspiciousAttributeRule(),
     )
 

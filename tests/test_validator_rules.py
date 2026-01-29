@@ -12,6 +12,7 @@ def test_rule_engine_flags_expression_result_unused():
     outcomes = engine.run("2 + 2\n")
     codes = {outcome.code for outcome in outcomes}
     assert "expression_result_unused" in codes
+    assert "no_output" in codes
 
 
 def test_rule_engine_flags_missing_terminal_operation():
@@ -54,6 +55,13 @@ def test_rule_engine_suppresses_expression_hint_when_terminal_missing():
     outcomes = engine.run("df.groupby('a')\n")
     codes = {outcome.code for outcome in outcomes}
     assert "expression_result_unused" not in codes
+
+
+def test_rule_engine_flags_no_output_without_print():
+    engine = RuleEngine()
+    outcomes = engine.run("x = 1\n")
+    codes = {outcome.code for outcome in outcomes}
+    assert "no_output" in codes
 
 
 def test_validator_runtime_smoke_test_flags_exception():

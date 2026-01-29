@@ -21,7 +21,6 @@ def test_inspect_python_code_flags_unsafe_import_and_call():
     codes = {hint["code"] for hint in hints}
     assert "unsafe_import" in codes
     assert "unsafe_call" in codes
-    assert "no_output" in codes
 
 
 def test_collect_hints_from_generated_sections_summary():
@@ -75,7 +74,7 @@ def test_classify_inspection_hints_excludes_environment_codes():
             "block_index": 0,
             "hints": [
                 {"code": "third_party_import", "message": "env"},
-                {"code": "no_output", "message": "learner"},
+                {"code": "style_long_line", "message": "learner"},
             ],
         }
     ]
@@ -87,7 +86,7 @@ def test_classify_inspection_hints_excludes_environment_codes():
     assert context == []
     learner_codes = {hint["code"] for hint in learner[0]["hints"]}
     environment_codes = {hint["code"] for hint in environment[0]["hints"]}
-    assert "no_output" in learner_codes
+    assert "style_long_line" in learner_codes
     assert "third_party_import" in environment_codes
 
 
@@ -146,10 +145,6 @@ def test_collect_hints_does_not_mutate_blocks():
     assert section.blocks[0].content == "print('ok')\n"
 
 
-def test_inspect_python_code_flags_no_output():
-    hints = inspect_python_code("x = 1\n")
-    codes = {hint["code"] for hint in hints}
-    assert "no_output" in codes
 
 
 def test_inspect_python_code_flags_long_line():
