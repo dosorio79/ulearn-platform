@@ -96,6 +96,46 @@ def test_generate_lesson_static_mode_invokes_mcp_tool(monkeypatch):
     assert response.model_dump() == expected.model_dump()
 
 
+def test_generate_lesson_records_system_observations_for_environment_mcp_hints(monkeypatch):
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", True)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+
+    def fake_invoke_tool(name: str, payload: dict[str, object]):
+        return (
+            [
+                {
+                    "section_id": "example",
+                    "block_index": 0,
+                    "hints": [
+                        {
+                            "code": "third_party_import",
+                            "message": "Third-party import 'polars' may be unavailable.",
+                        }
+                    ],
+                }
+            ],
+            {"python_blocks": 1, "blocks_with_hints": 1, "total_hints": 1},
+        )
+
+    monkeypatch.setattr(lesson_service, "invoke_tool", fake_invoke_tool)
+
+    request = LessonRequest(
+        topic="Polars when then otherwise",
+        level="beginner",
+    )
+
+    _ = asyncio.run(generate_lesson(request))
+
+    runs = mongo.get_memory_runs()
+    assert runs
+    system_observations = runs[-1].get("system_observations")
+    assert system_observations is not None
+    assert system_observations["mcp_environment_notes"]
+    assert "mcp_hints" in runs[-1]
+    assert runs[-1]["mcp_hints"] == []
+
+
 @pytest.mark.parametrize("static_mode", [True, False])
 def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
     monkeypatch.setattr(config, "STATIC_LESSON_MODE", static_mode)
@@ -113,6 +153,11 @@ def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
     runs = mongo.get_memory_runs()
     assert runs
     assert "mcp_summary" in runs[-1]
+    hint_summary = runs[-1].get("hint_summary")
+    assert hint_summary is not None
+    assert hint_summary["rule_hints"] >= 0
+    assert hint_summary["runtime_errors"] >= 0
+    assert hint_summary["mcp_explanations"] >= 0
 
 
 def test_static_lesson_includes_level_guidance():
@@ -193,6 +238,7 @@ def test_generate_lesson_persists_schema_failure(monkeypatch):
 
     insert_failure = Mock()
 
+    monkeypatch.setattr(config, "USE_LLM_CONTENT", False)
     monkeypatch.setattr(lesson_service, "planner_agent", DummyPlanner())
     monkeypatch.setattr(lesson_service, "content_agent", DummyContent(validation_error))
     monkeypatch.setattr(lesson_service, "validator_agent", DummyValidator())
@@ -247,6 +293,7 @@ def test_generate_lesson_persists_content_failure(monkeypatch):
 
     insert_failure = Mock()
 
+    monkeypatch.setattr(config, "USE_LLM_CONTENT", False)
     monkeypatch.setattr(lesson_service, "planner_agent", DummyPlanner())
     monkeypatch.setattr(lesson_service, "content_agent", DummyContent())
     monkeypatch.setattr(lesson_service, "validator_agent", DummyValidator())

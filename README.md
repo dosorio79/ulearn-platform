@@ -218,6 +218,9 @@ Create your environment file from `.env-example` and update values as needed:
 - `TELEMETRY_BACKEND` – `mongo` or `memory`
 - `DEMO_MODE` – shorthand for static lessons plus memory telemetry
 - `TELEMETRY_MEMORY_CAP` – max in-memory telemetry entries
+- `TELEMETRY_INCLUDE_HINT_DETAILS` – include rule/runtime hint payloads in telemetry (counts are always stored)
+- `RUNTIME_SMOKE_TEST_ENABLED` – enable advisory runtime smoke checks for Python blocks (restricted builtins, non-blocking)
+- `RUNTIME_SMOKE_TEST_TIMEOUT_SECONDS` – timeout for smoke execution (seconds)
 
 ---
 
@@ -258,6 +261,9 @@ Tests cover:
 
 Run all tests:
 - uv run pytest
+
+For CI/local overrides, load `.env` first and then `.env.test` to apply test-only settings.
+For Render demo deployments, `.env.render` is a minimal standalone set of defaults and is not layered on `.env`.
 
 For reproducible local runs:
 - uv sync --extra dev --frozen

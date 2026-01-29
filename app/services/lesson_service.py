@@ -13,6 +13,7 @@ from app.models.db import LessonRun, LessonFailure
 from app.services.mongo import insert_lesson_run, insert_lesson_failure
 from app.services.static_lessons import build_static_lesson
 from app.services.markdown_renderer import render_blocks_to_markdown
+from app.services.mcp_hints import summarize_rule_outcomes
 from app.agents.mcp_tools import invoke_tool
 from app.agents.planner import PlannerAgent
 from app.agents.content import ContentAgent
@@ -20,6 +21,12 @@ from app.agents.content_llm import ContentAgentLLM
 from app.agents.validator import ValidatorAgent
 
 logger = logging.getLogger(__name__)
+
+_ENVIRONMENT_MCP_CODES = {
+    "third_party_import",
+    "context7_missing",
+    "dependency_unavailable",
+}
 
 # ---------------------------
 # Agent instantiation
@@ -36,6 +43,11 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
 
     session_id = str(request.session_id) if request.session_id else str(uuid4())
     attempt_count = 1
+    rule_outcomes: list[dict] | None = None
+    rule_summary: dict[str, object] | None = None
+    rule_hints: list[dict] | None = None
+    runtime_hints: list[dict] | None = None
+    hint_summary: dict[str, int] | None = None
 
     def _summarize_schema_errors(errors: Sequence[Mapping[str, object]]) -> str:
         if not errors:
@@ -87,6 +99,39 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                     )
 
                 validated_sections = validator_agent.validate(generated_sections)
+                if hasattr(validator_agent, "collect_rule_outcomes"):
+                    rule_outcomes = validator_agent.collect_rule_outcomes(validated_sections)
+                rule_summary = summarize_rule_outcomes(rule_outcomes or [])
+                if rule_outcomes:
+                    rule_hints = []
+                    runtime_hints = []
+                    for entry in rule_outcomes:
+                        runtime_only = [
+                            outcome
+                            for outcome in entry.get("outcomes", [])
+                            if outcome.get("code") == "runtime_error"
+                        ]
+                        rule_only = [
+                            outcome
+                            for outcome in entry.get("outcomes", [])
+                            if outcome.get("code") != "runtime_error"
+                        ]
+                        if rule_only:
+                            rule_hints.append(
+                                {
+                                    "section_id": entry.get("section_id"),
+                                    "block_index": entry.get("block_index"),
+                                    "outcomes": rule_only,
+                                }
+                            )
+                        if runtime_only:
+                            runtime_hints.append(
+                                {
+                                    "section_id": entry.get("section_id"),
+                                    "block_index": entry.get("block_index"),
+                                    "outcomes": runtime_only,
+                                }
+                            )
 
                 response = LessonResponse(
                     objective=f"Learn {request.topic} at a {request.level} level in 15 minutes.",
@@ -169,6 +214,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
     # ---------------------------
     mcp_hints = None
     mcp_summary = None
+    system_observations: dict[str, object] | None = None
     try:
         if config.STATIC_LESSON_MODE:
             mcp_hints, mcp_summary = invoke_tool(
@@ -176,9 +222,12 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                 {"mode": "static", "sections": response.sections},
             )
         else:
+            payload = {"mode": "agentic", "sections": validated_sections}
+            if rule_outcomes:
+                payload["rule_outcomes"] = rule_outcomes
             mcp_hints, mcp_summary = invoke_tool(
                 "python_code_hints",
-                {"mode": "agentic", "sections": validated_sections},
+                payload,
             )
 
         if mcp_summary:
@@ -192,24 +241,60 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                 },
             )
         if mcp_hints:
-            for entry in mcp_hints:
-                for hint in entry.get("hints", []):
-                    logger.info(
-                        "mcp_hint",
-                        extra={
-                            "session_id": session_id,
-                            "section_id": entry.get("section_id"),
-                            "block_index": entry.get("block_index"),
-                            "hint_code": hint.get("code"),
-                            "hint_message": hint.get("message"),
-                        },
-                    )
+            learner_hints, environment_hints = _filter_mcp_hints(mcp_hints)
+            mcp_hints = learner_hints
+            if environment_hints:
+                system_observations = {
+                    "mcp_environment_notes": environment_hints,
+                }
+            if mcp_hints:
+                for entry in mcp_hints:
+                    for hint in entry.get("hints", []):
+                        logger.info(
+                            "mcp_hint",
+                            extra={
+                                "session_id": session_id,
+                                "section_id": entry.get("section_id"),
+                                "block_index": entry.get("block_index"),
+                                "hint_code": hint.get("code"),
+                                "hint_message": hint.get("message"),
+                            },
+                        )
+            if environment_hints:
+                for entry in environment_hints:
+                    for hint in entry.get("hints", []):
+                        logger.info(
+                            "mcp_environment_hint",
+                            extra={
+                                "session_id": session_id,
+                                "section_id": entry.get("section_id"),
+                                "block_index": entry.get("block_index"),
+                                "hint_code": hint.get("code"),
+                                "hint_message": hint.get("message"),
+                            },
+                        )
     except Exception as exc:
         logger.warning("MCP hint collection failed session_id=%s", session_id, exc_info=exc)
 
     # ---------------------------
     # Telemetry (best-effort)
     # ---------------------------
+    if hint_summary is None:
+        hint_summary = {
+            "rule_hints": sum(len(entry.get("outcomes", [])) for entry in rule_hints or []),
+            "runtime_errors": sum(len(entry.get("outcomes", [])) for entry in runtime_hints or []),
+            "mcp_explanations": _count_mcp_hints(mcp_hints),
+        }
+    logger.info(
+        "hint_summary",
+        extra={
+            "session_id": session_id,
+            "rule_hints": hint_summary["rule_hints"],
+            "runtime_errors": hint_summary["runtime_errors"],
+            "mcp_explanations": hint_summary["mcp_explanations"],
+        },
+    )
+
     telemetry = LessonRun(
         run_id=str(uuid4()),
         session_id=session_id,
@@ -220,8 +305,13 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         total_minutes=response.total_minutes,
         objective=response.objective,
         section_ids=[s.id for s in response.sections],
+        hint_summary=hint_summary,
+        rule_hints=rule_hints if config.TELEMETRY_INCLUDE_HINT_DETAILS else None,
+        runtime_hints=runtime_hints if config.TELEMETRY_INCLUDE_HINT_DETAILS else None,
         mcp_hints=mcp_hints,
-        mcp_summary=mcp_summary,
+        mcp_summary=_rebuild_mcp_summary(mcp_hints, mcp_summary),
+        rule_summary=rule_summary,
+        system_observations=system_observations,
     )
 
     try:
@@ -289,3 +379,59 @@ def _record_failure(
         },
         exc_info=exc,
     )
+
+
+def _filter_mcp_hints(
+    hints: list[dict],
+) -> tuple[list[dict], list[dict]]:
+    learner_hints: list[dict] = []
+    environment_hints: list[dict] = []
+    for entry in hints:
+        learner_entry_hints = []
+        environment_entry_hints = []
+        for hint in entry.get("hints", []):
+            code = hint.get("code")
+            if code in _ENVIRONMENT_MCP_CODES:
+                environment_entry_hints.append(hint)
+            else:
+                learner_entry_hints.append(hint)
+        if learner_entry_hints:
+            learner_hints.append(
+                {
+                    "section_id": entry.get("section_id"),
+                    "block_index": entry.get("block_index"),
+                    "hints": learner_entry_hints,
+                }
+            )
+        if environment_entry_hints:
+            environment_hints.append(
+                {
+                    "section_id": entry.get("section_id"),
+                    "block_index": entry.get("block_index"),
+                    "hints": environment_entry_hints,
+                }
+            )
+    return learner_hints, environment_hints
+
+
+def _count_mcp_hints(hints: list[dict] | None) -> int:
+    if not hints:
+        return 0
+    return sum(len(entry.get("hints", [])) for entry in hints)
+
+
+def _rebuild_mcp_summary(
+    hints: list[dict] | None,
+    previous_summary: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if previous_summary is None:
+        return None
+    python_blocks = previous_summary.get("python_blocks")
+    if not isinstance(python_blocks, int) or python_blocks == 0:
+        return previous_summary
+    hint_count = _count_mcp_hints(hints)
+    return {
+        "python_blocks": python_blocks,
+        "blocks_with_hints": len(hints or []),
+        "total_hints": hint_count,
+    }

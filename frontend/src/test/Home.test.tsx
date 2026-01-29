@@ -285,9 +285,13 @@ describe('Home Page', () => {
       });
 
       const runButton = await screen.findByTestId('run-button');
-      fireEvent.click(runButton);
+      await act(async () => {
+        fireEvent.click(runButton);
+      });
 
-      await screen.findByTestId('execution-output-empty');
+      await waitFor(() => {
+        expect(screen.getByTestId('execution-output-empty')).toBeInTheDocument();
+      });
       expect(screen.getByText(/no output yet/i)).toBeInTheDocument();
     });
 

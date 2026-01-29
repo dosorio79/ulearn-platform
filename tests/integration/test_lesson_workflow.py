@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.core import config
 from app.services import mongo
+from app.services import lesson_service
 
 pytestmark = pytest.mark.integration
 
@@ -24,3 +25,55 @@ def test_lesson_endpoint_records_mcp_summary(monkeypatch, static_mode):
     runs = mongo.get_memory_runs()
     assert runs
     assert "mcp_summary" in runs[-1]
+    if "system_observations" in runs[-1]:
+        assert runs[-1]["system_observations"]["mcp_environment_notes"]
+
+
+def test_lesson_endpoint_records_rule_engine_hints(monkeypatch):
+    monkeypatch.setattr(config, "STATIC_LESSON_MODE", False)
+    monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
+    mongo.reset_memory_store()
+
+    def fake_collect_rule_outcomes(sections):
+        return [
+            {
+                "section_id": sections[0].id,
+                "block_index": 0,
+                "outcomes": [
+                    {
+                        "code": "expression_result_unused",
+                        "context": {},
+                        "line": 1,
+                        "col": 0,
+                    }
+                ],
+            }
+        ]
+
+    monkeypatch.setattr(
+        lesson_service.validator_agent,
+        "collect_rule_outcomes",
+        fake_collect_rule_outcomes,
+    )
+
+    client = TestClient(app)
+    response = client.post(
+        "/lesson",
+        json={"topic": "Pandas groupby performance", "level": "beginner"},
+    )
+
+    assert response.status_code == 200
+    runs = mongo.get_memory_runs()
+    assert runs
+    hint_codes = {
+        hint.get("code")
+        for entry in runs[-1].get("mcp_hints", [])
+        for hint in entry.get("hints", [])
+    }
+    assert "expression_result_unused" in hint_codes
+    rule_summary = runs[-1].get("rule_summary")
+    assert rule_summary is not None
+    assert rule_summary["by_code"]["expression_result_unused"] == 1
+    hint_summary = runs[-1].get("hint_summary")
+    assert hint_summary is not None
+    assert hint_summary["rule_hints"] >= 1

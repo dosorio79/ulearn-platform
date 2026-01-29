@@ -1,9 +1,13 @@
 """Validator agent for lesson structure and content rules."""
 
 import ast
+import signal
+import threading
 from typing import Dict, List
 
+from app.core import config
 from app.models.agents import GeneratedSection, ContentBlock
+from app.agents.validator_rules import RuleEngine, RuleOutcome
 
 
 class ValidatorAgent:
@@ -23,6 +27,25 @@ class ValidatorAgent:
     JSON_LESSON_KEYS = {"objective", "sections"}
     JSON_SECTION_KEYS = {"id", "title", "minutes", "blocks"}
     JSON_BLOCK_KEYS = {"type", "content"}
+
+    def __init__(
+        self,
+        rule_engine: RuleEngine | None = None,
+        *,
+        runtime_smoke_test_enabled: bool | None = None,
+        runtime_smoke_test_timeout: float | None = None,
+    ) -> None:
+        self._rule_engine = rule_engine or RuleEngine()
+        self._runtime_smoke_test_enabled = (
+            config.RUNTIME_SMOKE_TEST_ENABLED
+            if runtime_smoke_test_enabled is None
+            else runtime_smoke_test_enabled
+        )
+        self._runtime_smoke_test_timeout = (
+            config.RUNTIME_SMOKE_TEST_TIMEOUT_SECONDS
+            if runtime_smoke_test_timeout is None
+            else runtime_smoke_test_timeout
+        )
 
     def validate(
         self,
@@ -160,6 +183,96 @@ class ValidatorAgent:
         if block.type == "text":
             self._validate_text_formatting(block.content)
 
+    def collect_rule_outcomes(self, sections: List[GeneratedSection]) -> list[dict]:
+        outcomes: list[dict] = []
+        for section in sections:
+            for index, block in enumerate(section.blocks):
+                if block.type != "python":
+                    continue
+                rule_outcomes = self._rule_engine.run(block.content)
+                if self._runtime_smoke_test_enabled:
+                    rule_outcomes.extend(self._runtime_smoke_test(block.content))
+                if not rule_outcomes:
+                    continue
+                outcomes.append(
+                    {
+                        "section_id": section.id,
+                        "block_index": index,
+                        "outcomes": [outcome.to_dict() for outcome in rule_outcomes],
+                    }
+                )
+        return outcomes
+
+    def _runtime_smoke_test(self, code: str) -> list[RuleOutcome]:
+        """Best-effort runtime smoke test that captures exceptions only."""
+        timeout_seconds = max(self._runtime_smoke_test_timeout, 0.0)
+
+        if threading.current_thread() is not threading.main_thread():
+            return []
+
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return []
+        if _contains_imports(tree):
+            return []
+
+        def _timeout_handler(*_args: object) -> None:
+            raise TimeoutError("Execution timed out.")
+
+        safe_builtins = {
+            "print": lambda *_args, **_kwargs: None,
+            "range": range,
+            "len": len,
+            "min": min,
+            "max": max,
+            "sum": sum,
+            "abs": abs,
+            "enumerate": enumerate,
+            "zip": zip,
+            "list": list,
+            "dict": dict,
+            "set": set,
+            "tuple": tuple,
+            "map": map,
+            "filter": filter,
+        }
+
+        globals_dict = {"__builtins__": safe_builtins}
+        locals_dict: dict[str, object] = {}
+
+        previous_handler = None
+        signal_armed = False
+        try:
+            if timeout_seconds > 0:
+                try:
+                    previous_handler = signal.getsignal(signal.SIGALRM)
+                    signal.signal(signal.SIGALRM, _timeout_handler)
+                    signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                    signal_armed = True
+                except (AttributeError, ValueError, OSError):
+                    return []
+            exec(code, globals_dict, locals_dict)
+        except Exception as exc:  # noqa: BLE001 - advisory smoke test only
+            return [
+                RuleOutcome(
+                    code="runtime_error",
+                    context={
+                        "error": type(exc).__name__,
+                        "message": str(exc),
+                    },
+                    line=None,
+                    col=None,
+                )
+            ]
+        finally:
+            if timeout_seconds > 0 and signal_armed:
+                signal.setitimer(signal.ITIMER_REAL, 0)
+                if previous_handler is not None:
+                    signal.signal(signal.SIGALRM, previous_handler)
+
+        return []
+
     def _validate_python_block(self, code: str) -> None:
         # 1. Syntax validation (non-negotiable).
         try:
@@ -220,3 +333,7 @@ class ValidatorAgent:
             raise ValueError(
                 "Text blocks must include a paragraph and a bullet or numbered list."
             )
+
+
+def _contains_imports(tree: ast.AST) -> bool:
+    return any(isinstance(node, (ast.Import, ast.ImportFrom)) for node in ast.walk(tree))

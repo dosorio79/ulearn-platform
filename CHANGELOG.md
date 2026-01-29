@@ -9,7 +9,14 @@ This repository was extracted from a larger monorepo during the AI Dev Tools Zoo
 ## [Unreleased]
 
 ### Added
-- None.
+- Advisory AST rule engine hints for Python code blocks.
+- Advisory runtime smoke test for Python blocks (feature-flagged).
+- Telemetry summary fields for rule/runtime hint counts.
+
+### Changed
+- Telemetry now separates rule/runtime hints alongside MCP hints.
+- `.env` and `.env-example` organized with annotated sections.
+- Makefile adds a focused hint/test target.
 
 ## [0.6.5] - 2026-01-25
 
