@@ -22,10 +22,14 @@ from app.agents.validator import ValidatorAgent
 
 logger = logging.getLogger(__name__)
 
-_ENVIRONMENT_MCP_CODES = {
+_ENVIRONMENT_INSPECTION_CODES = {
     "third_party_import",
     "context7_missing",
     "dependency_unavailable",
+}
+_CONTEXT_HINT_CODES = {
+    "context7_reference",
+    "context7_error",
 }
 
 # ---------------------------
@@ -212,12 +216,12 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
     # ---------------------------
     # MCP advisory hints (best-effort, non-blocking)
     # ---------------------------
-    mcp_hints = None
-    mcp_summary = None
+    inspection_hints = None
+    inspection_summary = None
     system_observations: dict[str, object] | None = None
     try:
         if config.STATIC_LESSON_MODE:
-            mcp_hints, mcp_summary = invoke_tool(
+            inspection_hints, inspection_summary = invoke_tool(
                 "python_code_hints",
                 {"mode": "static", "sections": response.sections},
             )
@@ -225,33 +229,41 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
             payload = {"mode": "agentic", "sections": validated_sections}
             if rule_outcomes:
                 payload["rule_outcomes"] = rule_outcomes
-            mcp_hints, mcp_summary = invoke_tool(
+            inspection_hints, inspection_summary = invoke_tool(
                 "python_code_hints",
                 payload,
             )
 
-        if mcp_summary:
+        if inspection_summary:
             logger.info(
-                "mcp_hint_summary",
+                "inspection_hint_summary",
                 extra={
                     "session_id": session_id,
-                    "python_blocks": mcp_summary["python_blocks"],
-                    "blocks_with_hints": mcp_summary["blocks_with_hints"],
-                    "total_hints": mcp_summary["total_hints"],
+                    "python_blocks": inspection_summary["python_blocks"],
+                    "blocks_with_hints": inspection_summary["blocks_with_hints"],
+                    "total_hints": inspection_summary["total_hints"],
                 },
             )
-        if mcp_hints:
-            learner_hints, environment_hints = _filter_mcp_hints(mcp_hints)
-            mcp_hints = learner_hints
+        if inspection_hints:
+            learner_hints, environment_hints, context_hints = _classify_inspection_hints(
+                inspection_hints
+            )
+            inspection_hints = learner_hints
             if environment_hints:
                 system_observations = {
-                    "mcp_environment_notes": environment_hints,
+                    "environment_notes": environment_hints,
+                    "context_notes": context_hints or [],
                 }
-            if mcp_hints:
-                for entry in mcp_hints:
+            elif context_hints:
+                system_observations = {
+                    "environment_notes": [],
+                    "context_notes": context_hints,
+                }
+            if inspection_hints:
+                for entry in inspection_hints:
                     for hint in entry.get("hints", []):
                         logger.info(
-                            "mcp_hint",
+                            "inspection_hint",
                             extra={
                                 "session_id": session_id,
                                 "section_id": entry.get("section_id"),
@@ -264,7 +276,20 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
                 for entry in environment_hints:
                     for hint in entry.get("hints", []):
                         logger.info(
-                            "mcp_environment_hint",
+                            "inspection_environment_note",
+                            extra={
+                                "session_id": session_id,
+                                "section_id": entry.get("section_id"),
+                                "block_index": entry.get("block_index"),
+                                "hint_code": hint.get("code"),
+                                "hint_message": hint.get("message"),
+                            },
+                        )
+            if context_hints:
+                for entry in context_hints:
+                    for hint in entry.get("hints", []):
+                        logger.info(
+                            "context_note",
                             extra={
                                 "session_id": session_id,
                                 "section_id": entry.get("section_id"),
@@ -283,7 +308,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         hint_summary = {
             "rule_hints": sum(len(entry.get("outcomes", [])) for entry in rule_hints or []),
             "runtime_errors": sum(len(entry.get("outcomes", [])) for entry in runtime_hints or []),
-            "mcp_explanations": _count_mcp_hints(mcp_hints),
+            "inspection_explanations": _count_inspection_hints(inspection_hints),
         }
     logger.info(
         "hint_summary",
@@ -291,7 +316,7 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
             "session_id": session_id,
             "rule_hints": hint_summary["rule_hints"],
             "runtime_errors": hint_summary["runtime_errors"],
-            "mcp_explanations": hint_summary["mcp_explanations"],
+            "inspection_explanations": hint_summary["inspection_explanations"],
         },
     )
 
@@ -308,8 +333,8 @@ async def generate_lesson(request: LessonRequest) -> LessonResponse:
         hint_summary=hint_summary,
         rule_hints=rule_hints if config.TELEMETRY_INCLUDE_HINT_DETAILS else None,
         runtime_hints=runtime_hints if config.TELEMETRY_INCLUDE_HINT_DETAILS else None,
-        mcp_hints=mcp_hints,
-        mcp_summary=_rebuild_mcp_summary(mcp_hints, mcp_summary),
+        inspection_hints=inspection_hints,
+        inspection_summary=_rebuild_inspection_summary(inspection_hints, inspection_summary),
         rule_summary=rule_summary,
         system_observations=system_observations,
     )
@@ -381,18 +406,22 @@ def _record_failure(
     )
 
 
-def _filter_mcp_hints(
+def _classify_inspection_hints(
     hints: list[dict],
-) -> tuple[list[dict], list[dict]]:
+) -> tuple[list[dict], list[dict], list[dict]]:
     learner_hints: list[dict] = []
     environment_hints: list[dict] = []
+    context_hints: list[dict] = []
     for entry in hints:
         learner_entry_hints = []
         environment_entry_hints = []
+        context_entry_hints = []
         for hint in entry.get("hints", []):
             code = hint.get("code")
-            if code in _ENVIRONMENT_MCP_CODES:
+            if code in _ENVIRONMENT_INSPECTION_CODES:
                 environment_entry_hints.append(hint)
+            elif code in _CONTEXT_HINT_CODES:
+                context_entry_hints.append(hint)
             else:
                 learner_entry_hints.append(hint)
         if learner_entry_hints:
@@ -411,16 +440,24 @@ def _filter_mcp_hints(
                     "hints": environment_entry_hints,
                 }
             )
-    return learner_hints, environment_hints
+        if context_entry_hints:
+            context_hints.append(
+                {
+                    "section_id": entry.get("section_id"),
+                    "block_index": entry.get("block_index"),
+                    "hints": context_entry_hints,
+                }
+            )
+    return learner_hints, environment_hints, context_hints
 
 
-def _count_mcp_hints(hints: list[dict] | None) -> int:
+def _count_inspection_hints(hints: list[dict] | None) -> int:
     if not hints:
         return 0
     return sum(len(entry.get("hints", [])) for entry in hints)
 
 
-def _rebuild_mcp_summary(
+def _rebuild_inspection_summary(
     hints: list[dict] | None,
     previous_summary: dict[str, object] | None,
 ) -> dict[str, object] | None:
@@ -429,7 +466,7 @@ def _rebuild_mcp_summary(
     python_blocks = previous_summary.get("python_blocks")
     if not isinstance(python_blocks, int) or python_blocks == 0:
         return previous_summary
-    hint_count = _count_mcp_hints(hints)
+    hint_count = _count_inspection_hints(hints)
     return {
         "python_blocks": python_blocks,
         "blocks_with_hints": len(hints or []),

@@ -10,7 +10,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.mark.parametrize("static_mode", [True, False])
-def test_lesson_endpoint_records_mcp_summary(monkeypatch, static_mode):
+def test_lesson_endpoint_records_inspection_summary(monkeypatch, static_mode):
     monkeypatch.setattr(config, "STATIC_LESSON_MODE", static_mode)
     monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
     mongo.reset_memory_store()
@@ -24,9 +24,9 @@ def test_lesson_endpoint_records_mcp_summary(monkeypatch, static_mode):
     assert response.status_code == 200
     runs = mongo.get_memory_runs()
     assert runs
-    assert "mcp_summary" in runs[-1]
+    assert "inspection_summary" in runs[-1]
     if "system_observations" in runs[-1]:
-        assert runs[-1]["system_observations"]["mcp_environment_notes"]
+        assert runs[-1]["system_observations"]["environment_notes"]
 
 
 def test_lesson_endpoint_records_rule_engine_hints(monkeypatch):
@@ -67,7 +67,7 @@ def test_lesson_endpoint_records_rule_engine_hints(monkeypatch):
     assert runs
     hint_codes = {
         hint.get("code")
-        for entry in runs[-1].get("mcp_hints", [])
+        for entry in runs[-1].get("inspection_hints", [])
         for hint in entry.get("hints", [])
     }
     assert "expression_result_unused" in hint_codes

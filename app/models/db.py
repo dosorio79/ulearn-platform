@@ -25,8 +25,8 @@ class LessonRunModel(BaseModel):
     hint_summary: Optional[dict[str, Any]] = None
     rule_hints: Optional[List[dict[str, Any]]] = None
     runtime_hints: Optional[List[dict[str, Any]]] = None
-    mcp_hints: Optional[List[dict[str, Any]]] = None
-    mcp_summary: Optional[dict[str, Any]] = None
+    inspection_hints: Optional[List[dict[str, Any]]] = None
+    inspection_summary: Optional[dict[str, Any]] = None
     rule_summary: Optional[dict[str, Any]] = None
     system_observations: Optional[dict[str, Any]] = None
 
@@ -63,8 +63,8 @@ class LessonRun:
     hint_summary: Optional[dict[str, Any]] = None
     rule_hints: Optional[List[dict[str, Any]]] = None
     runtime_hints: Optional[List[dict[str, Any]]] = None
-    mcp_hints: Optional[List[dict[str, Any]]] = None
-    mcp_summary: Optional[dict[str, Any]] = None
+    inspection_hints: Optional[List[dict[str, Any]]] = None
+    inspection_summary: Optional[dict[str, Any]] = None
     rule_summary: Optional[dict[str, Any]] = None
     system_observations: Optional[dict[str, Any]] = None
 
@@ -84,8 +84,8 @@ class LessonRun:
             hint_summary=self.hint_summary,
             rule_hints=self.rule_hints,
             runtime_hints=self.runtime_hints,
-            mcp_hints=self.mcp_hints,
-            mcp_summary=self.mcp_summary,
+            inspection_hints=self.inspection_hints,
+            inspection_summary=self.inspection_summary,
             rule_summary=self.rule_summary,
             system_observations=self.system_observations,
         )
@@ -109,10 +109,10 @@ class LessonRun:
             doc["rule_hints"] = self.rule_hints
         if self.runtime_hints is not None:
             doc["runtime_hints"] = self.runtime_hints
-        if self.mcp_hints is not None:
-            doc["mcp_hints"] = self.mcp_hints
-        if self.mcp_summary is not None:
-            doc["mcp_summary"] = self.mcp_summary
+        if self.inspection_hints is not None:
+            doc["inspection_hints"] = self.inspection_hints
+        if self.inspection_summary is not None:
+            doc["inspection_summary"] = self.inspection_summary
         if self.rule_summary is not None:
             doc["rule_summary"] = self.rule_summary
         if self.system_observations is not None:

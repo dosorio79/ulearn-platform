@@ -96,7 +96,7 @@ def test_generate_lesson_static_mode_invokes_mcp_tool(monkeypatch):
     assert response.model_dump() == expected.model_dump()
 
 
-def test_generate_lesson_records_system_observations_for_environment_mcp_hints(monkeypatch):
+def test_generate_lesson_records_system_observations_for_environment_inspection_hints(monkeypatch):
     monkeypatch.setattr(config, "STATIC_LESSON_MODE", True)
     monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
     mongo.reset_memory_store()
@@ -131,13 +131,13 @@ def test_generate_lesson_records_system_observations_for_environment_mcp_hints(m
     assert runs
     system_observations = runs[-1].get("system_observations")
     assert system_observations is not None
-    assert system_observations["mcp_environment_notes"]
-    assert "mcp_hints" in runs[-1]
-    assert runs[-1]["mcp_hints"] == []
+    assert system_observations["environment_notes"]
+    assert "inspection_hints" in runs[-1]
+    assert runs[-1]["inspection_hints"] == []
 
 
 @pytest.mark.parametrize("static_mode", [True, False])
-def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
+def test_generate_lesson_records_inspection_summary(monkeypatch, static_mode):
     monkeypatch.setattr(config, "STATIC_LESSON_MODE", static_mode)
     monkeypatch.setattr(config, "TELEMETRY_BACKEND", "memory")
     mongo.reset_memory_store()
@@ -152,12 +152,12 @@ def test_generate_lesson_records_mcp_summary(monkeypatch, static_mode):
     assert response.sections
     runs = mongo.get_memory_runs()
     assert runs
-    assert "mcp_summary" in runs[-1]
+    assert "inspection_summary" in runs[-1]
     hint_summary = runs[-1].get("hint_summary")
     assert hint_summary is not None
     assert hint_summary["rule_hints"] >= 0
     assert hint_summary["runtime_errors"] >= 0
-    assert hint_summary["mcp_explanations"] >= 0
+    assert hint_summary["inspection_explanations"] >= 0
 
 
 def test_static_lesson_includes_level_guidance():

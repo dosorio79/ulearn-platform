@@ -66,8 +66,8 @@ def test_collect_hints_invokes_mcp_tool():
     assert summary is not None
 
 
-def test_filter_mcp_hints_excludes_environment_codes():
-    from app.services.lesson_service import _filter_mcp_hints
+def test_classify_inspection_hints_excludes_environment_codes():
+    from app.services.lesson_service import _classify_inspection_hints
 
     hints = [
         {
@@ -80,10 +80,11 @@ def test_filter_mcp_hints_excludes_environment_codes():
         }
     ]
 
-    learner, environment = _filter_mcp_hints(hints)
+    learner, environment, context = _classify_inspection_hints(hints)
 
     assert learner
     assert environment
+    assert context == []
     learner_codes = {hint["code"] for hint in learner[0]["hints"]}
     environment_codes = {hint["code"] for hint in environment[0]["hints"]}
     assert "no_output" in learner_codes
