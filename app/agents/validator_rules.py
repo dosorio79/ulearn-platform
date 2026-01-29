@@ -202,6 +202,10 @@ class NoOutputRule(Rule):
     _correction_intent = "add_visible_output"
 
     def apply(self, tree: ast.AST, code: str) -> list[RuleOutcome]:
+        # NOTE:
+        # Under strict validation, blocks without visible output are rejected
+        # before rules are applied. As a result, this rule will not emit outcomes
+        # in strict mode. It exists for relaxed/static modes and intent completeness.
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
@@ -210,6 +214,7 @@ class NoOutputRule(Rule):
                 return []
             if isinstance(func, ast.Attribute) and func.attr in _OUTPUT_CALLS:
                 return []
+        # Intent only: no concrete suggestion without an expression context.
         return [
             RuleOutcome(
                 code=self.code,
